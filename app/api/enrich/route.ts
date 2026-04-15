@@ -1,58 +1,31 @@
 import { Hyperbrowser } from "@hyperbrowser/sdk";
-import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 
 export const maxDuration = 120;
 
 const hb = new Hyperbrowser({ apiKey: process.env.HYPERBROWSER_API_KEY! });
-const claude = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
-// Stealth session options — bypasses bot detection on career pages (Greenhouse, Lever, Workday)
-const STEALTH_OPTS = {
-  useStealth: true,
-  solveCaptchas: true,
-};
-
-// Schema for what we extract from each company
 const CompanyProfileSchema = z.object({
-  name: z.string().describe("Company name"),
-  oneLiner: z.string().describe("What the company does in one sentence"),
-  productCategory: z
-    .string()
-    .describe("e.g. DevTools, Fintech, AI Infrastructure, SaaS CRM"),
-  customers: z
-    .string()
-    .describe("Who they sell to: enterprises, developers, SMBs, consumers"),
-  techStack: z
-    .array(z.string())
-    .describe(
-      "Technologies mentioned in job postings or engineering blog — languages, frameworks, infra"
-    ),
-  openRoles: z
-    .array(
-      z.object({
-        title: z.string(),
-        team: z.string().optional(),
-        location: z.string().optional(),
-      })
-    )
-    .describe("Open job listings found"),
-  hiringVelocity: z
-    .enum(["none", "slow", "steady", "aggressive"])
-    .describe("Inferred from number and seniority of open roles"),
-  fundingStage: z
-    .string()
-    .optional()
-    .describe("Seed, Series A, Series B, public, etc. if mentioned"),
-  teamSizeEstimate: z
-    .string()
-    .optional()
-    .describe("e.g. '10-50', '50-200', if determinable"),
-  keySignals: z
-    .array(z.string())
-    .describe(
-      "3-5 notable signals: e.g. 'Hiring 5 ML engineers', 'Migrating to Rust', 'Recently launched enterprise tier'"
-    ),
+  name: z.string().describe("Company legal or brand name"),
+  oneLiner: z.string().describe("One sentence: what the company does and for whom"),
+  productCategory: z.string().describe("e.g. DevTools, Fintech, AI Infrastructure, SaaS CRM, E-commerce"),
+  customers: z.string().describe("Who they sell to: enterprises, developers, SMBs, consumers, etc."),
+  techStack: z.array(z.string()).describe("Technologies explicitly mentioned on the site or in job postings — languages, frameworks, cloud providers, databases, tools"),
+  openRoles: z.array(z.object({
+    title: z.string(),
+    team: z.string().optional(),
+    location: z.string().optional(),
+  })).describe("All open job listings found on the site or careers page"),
+  hiringVelocity: z.enum(["none", "slow", "steady", "aggressive"]).describe("none=0 open roles, slow=1-3, steady=4-10, aggressive=10+"),
+  fundingStage: z.string().optional().describe("Seed, Series A, Series B, public, bootstrapped, etc. if mentioned"),
+  teamSizeEstimate: z.string().optional().describe("Approximate headcount range, e.g. '10-50', '50-200'"),
+  foundedYear: z.string().optional().describe("Year the company was founded if mentioned"),
+  keySignals: z.array(z.string()).describe("3-5 notable, specific signals: e.g. 'Hiring 5 ML engineers suggesting AI product push', 'Migrating from Python to Rust per job requirements'"),
+  socialLinks: z.object({
+    twitter: z.string().optional(),
+    linkedin: z.string().optional(),
+    github: z.string().optional(),
+  }).optional().describe("Social/community links found on the site"),
 });
 
 export type CompanyProfile = z.infer<typeof CompanyProfileSchema>;
@@ -62,101 +35,44 @@ export interface EnrichResult {
   status: "ok" | "error";
   profile?: CompanyProfile;
   error?: string;
+  scrapedAt?: string;
 }
 
 async function enrichDomain(domain: string): Promise<EnrichResult> {
   const clean = domain.replace(/^https?:\/\//, "").replace(/\/$/, "");
-  const homeUrl = `https://${clean}`;
-  const careerUrls = [
-    `https://${clean}/careers`,
-    `https://${clean}/jobs`,
-    `https://${clean}/about/careers`,
-    `https://${clean}/company/careers`,
-  ];
 
-  // Scrape homepage + top career URL candidates in parallel
-  const [homeResult, ...careerResults] = await Promise.allSettled([
-    hb.scrape.startAndWait({
-      url: homeUrl,
-      sessionOptions: STEALTH_OPTS,
-      scrapeOptions: { formats: ["markdown"], onlyMainContent: true, timeout: 20000 },
-    }),
-    // Try first two career URL patterns simultaneously
-    hb.scrape.startAndWait({
-      url: careerUrls[0],
-      sessionOptions: STEALTH_OPTS,
-      scrapeOptions: { formats: ["markdown"], onlyMainContent: true, timeout: 20000 },
-    }),
-    hb.scrape.startAndWait({
-      url: careerUrls[1],
-      sessionOptions: STEALTH_OPTS,
-      scrapeOptions: { formats: ["markdown"], onlyMainContent: true, timeout: 20000 },
-    }),
-  ]);
-
-  const homeMarkdown =
-    homeResult.status === "fulfilled"
-      ? homeResult.value?.data?.markdown ?? ""
-      : "";
-
-  const careerMarkdown = careerResults
-    .filter((r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof hb.scrape.startAndWait>>> =>
-      r.status === "fulfilled" && !!r.value?.data?.markdown
-    )
-    .map((r) => r.value?.data?.markdown ?? "")
-    .join("\n\n");
-
-  if (!homeMarkdown && !careerMarkdown) {
-    return { domain: clean, status: "error", error: "Could not load any pages" };
-  }
-
-  // Use Claude to extract structured profile from raw scraped content
-  const msg = await claude.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 1024,
-    messages: [
-      {
-        role: "user",
-        content: `You are a B2B research analyst. Extract a structured company profile from the scraped content below.
-Domain: ${clean}
-
-Return ONLY valid JSON matching this exact structure, no markdown, no explanation:
-{
-  "name": string,
-  "oneLiner": string,
-  "productCategory": string,
-  "customers": string,
-  "techStack": string[],
-  "openRoles": [{"title": string, "team": string|null, "location": string|null}],
-  "hiringVelocity": "none"|"slow"|"steady"|"aggressive",
-  "fundingStage": string|null,
-  "teamSizeEstimate": string|null,
-  "keySignals": string[]
-}
-
-Rules:
-- techStack: only extract technologies EXPLICITLY mentioned (languages, frameworks, cloud, tools)
-- keySignals: be specific and actionable ("Hiring 4 senior ML engineers" not "company is growing")
-- hiringVelocity: none=0 jobs, slow=1-3, steady=4-10, aggressive=10+
-- If info isn't available, use null or empty arrays
-
---- HOMEPAGE ---
-${homeMarkdown.slice(0, 2500)}
-
---- CAREERS PAGE ---
-${careerMarkdown.slice(0, 2500)}`,
-      },
+  // Hyperbrowser extract visits multiple URL variants automatically,
+  // uses stealth mode to bypass bot detection on ATS platforms,
+  // and applies its own built-in AI to extract structured data —
+  // no external LLM key required.
+  const result = await hb.extract.startAndWait({
+    urls: [
+      `https://${clean}`,
+      `https://${clean}/careers`,
+      `https://${clean}/jobs`,
+      `https://${clean}/about`,
     ],
+    prompt: `Extract a comprehensive company intelligence profile.
+Focus especially on: what the company builds, who their customers are,
+their technology choices (from job requirements, engineering blog, etc.),
+all open job listings with titles and locations, and any strategic signals
+(funding news, new product launches, major hiring pushes, technology migrations).`,
+    schema: CompanyProfileSchema,
+    sessionOptions: {
+      useStealth: true,
+      solveCaptchas: true,
+    },
   });
 
-  const raw = (msg.content[0] as { type: string; text: string }).text.trim();
+  if (result.status !== "completed" || !result.data) {
+    return { domain: clean, status: "error", error: result.error ?? "Extract failed" };
+  }
 
   try {
-    const parsed = JSON.parse(raw);
-    const profile = CompanyProfileSchema.parse(parsed);
-    return { domain: clean, status: "ok", profile };
+    const profile = CompanyProfileSchema.parse(result.data);
+    return { domain: clean, status: "ok", profile, scrapedAt: new Date().toISOString() };
   } catch {
-    return { domain: clean, status: "error", error: "Failed to parse profile" };
+    return { domain: clean, status: "error", error: "Schema validation failed" };
   }
 }
 
@@ -167,18 +83,14 @@ export async function POST(request: Request) {
     return Response.json({ error: "domains array required" }, { status: 400 });
   }
 
-  const list: string[] = domains.slice(0, 10); // cap at 10
+  const list: string[] = domains.slice(0, 10);
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
       const send = (data: object) =>
-        controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify(data)}\n\n`)
-        );
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
 
-      // Process all domains concurrently — this is the core Hyperbrowser value:
-      // parallel stealth browser sessions, impossible to do at this scale with a regular scraper
       await Promise.allSettled(
         list.map(async (domain) => {
           send({ event: "started", domain });

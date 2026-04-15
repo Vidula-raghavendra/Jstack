@@ -1,382 +1,166 @@
-"use client";
+import Link from "next/link";
 
-import { useState, useRef } from "react";
-import type { CompanyProfile, EnrichResult } from "./api/enrich/route";
-
-type RowState = "pending" | "loading" | "ok" | "error";
-
-interface Row {
-  domain: string;
-  state: RowState;
-  profile?: CompanyProfile;
-  error?: string;
-}
-
-const PRESETS = [
-  "stripe.com",
-  "linear.app",
-  "vercel.com",
-  "clerk.com",
-  "resend.com",
-  "hyperbrowser.ai",
-  "anthropic.com",
-  "openai.com",
+const FEATURES = [
+  {
+    icon: "⚡",
+    title: "Parallel stealth scraping",
+    desc: "All domains run simultaneously in isolated stealth browser sessions. 10 companies in the same time as 1.",
+  },
+  {
+    icon: "🔍",
+    title: "Bypasses bot detection",
+    desc: "Greenhouse, Lever, Workday, and custom career pages actively block scrapers. We get through anyway.",
+  },
+  {
+    icon: "🧠",
+    title: "AI-powered extraction",
+    desc: "Structured data, not a wall of text. Tech stack, open roles, hiring velocity, funding stage, key signals.",
+  },
+  {
+    icon: "📤",
+    title: "Export & history",
+    desc: "All past runs saved locally. Export any snapshot to CSV for your CRM, outreach tool, or spreadsheet.",
+  },
 ];
 
-const VELOCITY_LABELS: Record<string, { label: string; color: string }> = {
-  none: { label: "Not hiring", color: "text-gray-500" },
-  slow: { label: "Slow", color: "text-yellow-500" },
-  steady: { label: "Steady", color: "text-blue-400" },
-  aggressive: { label: "Aggressive ↑", color: "text-emerald-400" },
-};
+const HOW_IT_WORKS = [
+  { step: "1", title: "Paste domains", desc: "One per line. Any format — stripe.com, https://vercel.com, whatever." },
+  { step: "2", title: "Hyperbrowser opens parallel sessions", desc: "Each domain gets its own stealth browser. Homepage, careers page, about page — all scraped simultaneously." },
+  { step: "3", title: "AI extracts the signal", desc: "Tech stack from job requirements. Hiring velocity from role count. Key signals from copy and announcements." },
+  { step: "4", title: "You get a live table", desc: "Results stream in as each domain finishes. Filter, sort, expand, export." },
+];
 
-export default function Home() {
-  const [input, setInput] = useState("");
-  const [rows, setRows] = useState<Row[]>([]);
-  const [running, setRunning] = useState(false);
-  const [filter, setFilter] = useState("");
-  const abortRef = useRef<AbortController | null>(null);
+const USECASES = [
+  { role: "Sales", desc: "Spot companies scaling engineering before your competitor does. Personalize outreach with real stack data." },
+  { role: "Recruiting", desc: "Find companies hiring in your niche. See exactly what skills they need before you reach out." },
+  { role: "Investors", desc: "Quick diligence on a list of prospects. Hiring velocity and tech stack as leading indicators." },
+  { role: "Founders", desc: "Monitor competitors. Know when they hire, what they're building, and where they're expanding." },
+];
 
-  function parseDomains(text: string): string[] {
-    return text
-      .split(/[\n,\s]+/)
-      .map((s) => s.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/$/, ""))
-      .filter((s) => s.includes("."));
-  }
-
-  async function run(domains: string[]) {
-    if (!domains.length || running) return;
-
-    abortRef.current?.abort();
-    abortRef.current = new AbortController();
-
-    setRunning(true);
-    setRows(domains.map((d) => ({ domain: d, state: "pending" })));
-
-    try {
-      const res = await fetch("/api/enrich", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ domains }),
-        signal: abortRef.current.signal,
-      });
-
-      if (!res.body) throw new Error("No stream");
-
-      const reader = res.body.getReader();
-      const dec = new TextDecoder();
-      let buf = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += dec.decode(value, { stream: true });
-
-        const lines = buf.split("\n");
-        buf = lines.pop() ?? "";
-
-        for (const line of lines) {
-          if (!line.startsWith("data: ")) continue;
-          const payload = JSON.parse(line.slice(6)) as EnrichResult & {
-            event: string;
-          };
-
-          if (payload.event === "started") {
-            setRows((prev) =>
-              prev.map((r) =>
-                r.domain === payload.domain ? { ...r, state: "loading" } : r
-              )
-            );
-          } else if (payload.event === "result") {
-            setRows((prev) =>
-              prev.map((r) =>
-                r.domain === payload.domain
-                  ? {
-                      ...r,
-                      state: payload.status === "ok" ? "ok" : "error",
-                      profile: payload.profile,
-                      error: payload.error,
-                    }
-                  : r
-              )
-            );
-          }
-        }
-      }
-    } catch (e) {
-      if ((e as Error).name !== "AbortError") {
-        console.error(e);
-      }
-    } finally {
-      setRunning(false);
-    }
-  }
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const domains = parseDomains(input);
-    if (domains.length) run(domains);
-  }
-
-  function addPreset(domain: string) {
-    setInput((prev) => {
-      const existing = parseDomains(prev);
-      if (existing.includes(domain)) return prev;
-      return prev ? `${prev.trim()}\n${domain}` : domain;
-    });
-  }
-
-  const visibleRows = filter
-    ? rows.filter(
-        (r) =>
-          r.domain.includes(filter.toLowerCase()) ||
-          r.profile?.productCategory
-            ?.toLowerCase()
-            .includes(filter.toLowerCase()) ||
-          r.profile?.techStack?.some((t) =>
-            t.toLowerCase().includes(filter.toLowerCase())
-          )
-      )
-    : rows;
-
-  const doneCount = rows.filter((r) => r.state === "ok" || r.state === "error").length;
-
+export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100" style={{ fontFamily: "var(--font-geist-mono), monospace" }}>
-      {/* Header */}
-      <header className="border-b border-gray-800 px-6 py-4 flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-bold tracking-widest text-white uppercase">ProspectIQ</span>
-          <span className="text-xs bg-emerald-950 text-emerald-400 border border-emerald-800 px-2 py-0.5 rounded-full">
-            beta
-          </span>
+    <div className="min-h-screen bg-gray-950 text-gray-100">
+      {/* Nav */}
+      <nav className="border-b border-gray-800 px-6 py-4 flex items-center justify-between">
+        <span className="font-bold tracking-tight text-white">ProspectIQ</span>
+        <div className="flex items-center gap-4">
+          <a href="#how" className="text-sm text-gray-400 hover:text-white transition-colors hidden sm:block">How it works</a>
+          <a href="#usecases" className="text-sm text-gray-400 hover:text-white transition-colors hidden sm:block">Use cases</a>
+          <Link
+            href="/app"
+            className="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-sm px-4 py-2 rounded-lg transition-colors"
+          >
+            Try it free →
+          </Link>
         </div>
-        <span className="text-xs text-gray-600 ml-auto hidden sm:block">
-          B2B intel via{" "}
-          <a href="https://www.hyperbrowser.ai" target="_blank" rel="noopener noreferrer" className="text-emerald-500">
-            Hyperbrowser
-          </a>{" "}
-          stealth scraping · parallel browser sessions
-        </span>
-      </header>
+      </nav>
 
-      <div className="max-w-6xl mx-auto px-4 py-10 space-y-8">
-        {/* Pitch */}
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight mb-2">
-            Enrich any company,{" "}
-            <span className="text-emerald-400">instantly</span>
-          </h1>
-          <p className="text-gray-400 max-w-xl">
-            Paste domains. ProspectIQ opens parallel stealth browser sessions via Hyperbrowser,
-            scrapes their website + careers pages (including Greenhouse/Lever/Workday which
-            block normal scrapers), and returns tech stack, hiring signals, and company intel —
-            live, from the actual pages.
-          </p>
+      {/* Hero */}
+      <section className="max-w-4xl mx-auto px-6 py-24 text-center">
+        <div className="inline-flex items-center gap-2 bg-emerald-950 border border-emerald-800 text-emerald-400 text-xs px-3 py-1.5 rounded-full mb-8">
+          <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
+          Powered by Hyperbrowser · stealth parallel scraping
+        </div>
+        <h1 className="text-5xl sm:text-6xl font-bold tracking-tight leading-tight mb-6">
+          Company intel,<br />
+          <span className="text-emerald-400">from the live web</span>
+        </h1>
+        <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+          Paste any list of company domains. ProspectIQ scrapes their websites and
+          careers pages in parallel — bypassing bot detection — and returns structured
+          intelligence: tech stack, open roles, hiring velocity, key signals.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            href="/app"
+            className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-base px-8 py-3.5 rounded-xl transition-colors"
+          >
+            Enrich companies →
+          </Link>
+          <a
+            href="#how"
+            className="border border-gray-700 hover:border-gray-500 text-gray-300 font-medium text-base px-8 py-3.5 rounded-xl transition-colors"
+          >
+            See how it works
+          </a>
         </div>
 
-        {/* Input */}
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="flex gap-2">
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={"stripe.com\nlinear.app\nvercel.com"}
-              rows={4}
-              className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
-              disabled={running}
-            />
-            <div className="flex flex-col gap-2">
-              <button
-                type="submit"
-                disabled={running || !input.trim()}
-                className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-black font-bold text-sm px-6 py-3 rounded-lg transition-colors h-full"
-              >
-                {running ? (
-                  <span className="flex items-center gap-2">
-                    <span className="inline-block w-2 h-2 bg-black rounded-full animate-bounce" />
-                    {doneCount}/{rows.length}
-                  </span>
-                ) : (
-                  "Enrich →"
-                )}
-              </button>
+        {/* Demo domains */}
+        <div className="mt-16 flex flex-wrap gap-2 justify-center">
+          {["stripe.com", "linear.app", "vercel.com", "anthropic.com", "hyperbrowser.ai", "clerk.com"].map(d => (
+            <span key={d} className="bg-gray-900 border border-gray-800 text-gray-500 text-xs px-3 py-1.5 rounded-full">
+              {d}
+            </span>
+          ))}
+          <span className="text-gray-700 text-xs px-3 py-1.5">→ structured intel in seconds</span>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="border-y border-gray-800 bg-gray-900/40">
+        <div className="max-w-5xl mx-auto px-6 py-20 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          {FEATURES.map(f => (
+            <div key={f.title}>
+              <div className="text-2xl mb-3">{f.icon}</div>
+              <h3 className="font-semibold text-white mb-2">{f.title}</h3>
+              <p className="text-sm text-gray-400 leading-relaxed">{f.desc}</p>
             </div>
-          </div>
+          ))}
+        </div>
+      </section>
 
-          {/* Presets */}
-          <div className="flex flex-wrap gap-2">
-            <span className="text-xs text-gray-600 self-center">Try:</span>
-            {PRESETS.map((d) => (
-              <button
-                key={d}
-                type="button"
-                onClick={() => addPreset(d)}
-                className="text-xs bg-gray-900 border border-gray-800 hover:border-gray-600 text-gray-400 hover:text-gray-200 px-3 py-1 rounded-full transition-colors"
-              >
-                + {d}
-              </button>
+      {/* How it works */}
+      <section id="how" className="max-w-4xl mx-auto px-6 py-24">
+        <h2 className="text-3xl font-bold mb-12 text-center">How it works</h2>
+        <div className="space-y-6">
+          {HOW_IT_WORKS.map(s => (
+            <div key={s.step} className="flex gap-5 items-start">
+              <div className="w-8 h-8 rounded-full bg-emerald-950 border border-emerald-800 text-emerald-400 text-sm font-bold flex items-center justify-center shrink-0">
+                {s.step}
+              </div>
+              <div>
+                <h3 className="font-semibold text-white mb-1">{s.title}</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">{s.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Use cases */}
+      <section id="usecases" className="border-t border-gray-800 bg-gray-900/40">
+        <div className="max-w-5xl mx-auto px-6 py-20">
+          <h2 className="text-3xl font-bold mb-12 text-center">Who uses this</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {USECASES.map(u => (
+              <div key={u.role} className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                <h3 className="font-semibold text-emerald-400 mb-2">{u.role}</h3>
+                <p className="text-sm text-gray-400 leading-relaxed">{u.desc}</p>
+              </div>
             ))}
           </div>
-        </form>
-
-        {/* Results */}
-        {rows.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <span className="text-xs text-gray-500">
-                {doneCount}/{rows.length} completed
-              </span>
-              {doneCount > 0 && (
-                <input
-                  type="text"
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                  placeholder="Filter by domain, category, or tech..."
-                  className="ml-auto bg-gray-900 border border-gray-800 rounded px-3 py-1.5 text-xs text-gray-300 placeholder-gray-600 focus:outline-none focus:border-gray-600 w-64"
-                />
-              )}
-            </div>
-
-            <div className="space-y-3">
-              {visibleRows.map((row) => (
-                <CompanyCard key={row.domain} row={row} />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function CompanyCard({ row }: { row: Row }) {
-  const { domain, state, profile, error } = row;
-  const vel = profile ? VELOCITY_LABELS[profile.hiringVelocity] : null;
-
-  return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-      {/* Top row */}
-      <div className="flex items-start gap-3 mb-4">
-        <img
-          src={`https://www.google.com/s2/favicons?domain=${domain}&sz=32`}
-          alt=""
-          className="w-6 h-6 rounded mt-0.5 shrink-0"
-        />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <a
-              href={`https://${domain}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-semibold text-white hover:text-emerald-400 transition-colors"
-            >
-              {profile?.name ?? domain}
-            </a>
-            {profile?.productCategory && (
-              <span className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full">
-                {profile.productCategory}
-              </span>
-            )}
-            {profile?.fundingStage && (
-              <span className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full">
-                {profile.fundingStage}
-              </span>
-            )}
-          </div>
-          {profile?.oneLiner && (
-            <p className="text-sm text-gray-400 mt-0.5">{profile.oneLiner}</p>
-          )}
         </div>
+      </section>
 
-        {/* State badge */}
-        <div className="shrink-0">
-          {state === "loading" && (
-            <span className="text-xs text-yellow-500 flex items-center gap-1">
-              <span className="inline-block w-1.5 h-1.5 bg-yellow-500 rounded-full animate-pulse" />
-              scraping
-            </span>
-          )}
-          {state === "pending" && (
-            <span className="text-xs text-gray-600">queued</span>
-          )}
-          {state === "error" && (
-            <span className="text-xs text-red-500">failed</span>
-          )}
-          {state === "ok" && vel && (
-            <span className={`text-xs ${vel.color}`}>{vel.label}</span>
-          )}
-        </div>
-      </div>
+      {/* CTA */}
+      <section className="max-w-2xl mx-auto px-6 py-24 text-center">
+        <h2 className="text-3xl font-bold mb-4">Ready to enrich your pipeline?</h2>
+        <p className="text-gray-400 mb-8">Free to try. Just bring your Hyperbrowser API key.</p>
+        <Link
+          href="/app"
+          className="bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-base px-10 py-4 rounded-xl transition-colors inline-block"
+        >
+          Start enriching →
+        </Link>
+      </section>
 
-      {state === "ok" && profile && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-          {/* Tech stack */}
-          {profile.techStack.length > 0 && (
-            <div>
-              <p className="text-gray-500 uppercase tracking-wider mb-2 text-[10px]">
-                Tech Stack
-              </p>
-              <div className="flex flex-wrap gap-1">
-                {profile.techStack.map((t) => (
-                  <span
-                    key={t}
-                    className="bg-gray-800 text-gray-300 px-2 py-0.5 rounded text-[11px]"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Open roles */}
-          {profile.openRoles.length > 0 && (
-            <div>
-              <p className="text-gray-500 uppercase tracking-wider mb-2 text-[10px]">
-                Open Roles ({profile.openRoles.length})
-              </p>
-              <div className="space-y-1">
-                {profile.openRoles.slice(0, 5).map((r, i) => (
-                  <div key={i} className="flex items-center gap-1.5 text-gray-300">
-                    <span className="text-emerald-700">›</span>
-                    <span>{r.title}</span>
-                    {r.location && (
-                      <span className="text-gray-600 text-[10px]">{r.location}</span>
-                    )}
-                  </div>
-                ))}
-                {profile.openRoles.length > 5 && (
-                  <span className="text-gray-600">
-                    +{profile.openRoles.length - 5} more
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Key signals */}
-          {profile.keySignals.length > 0 && (
-            <div>
-              <p className="text-gray-500 uppercase tracking-wider mb-2 text-[10px]">
-                Signals
-              </p>
-              <div className="space-y-1">
-                {profile.keySignals.map((s, i) => (
-                  <div key={i} className="flex items-start gap-1.5 text-gray-300">
-                    <span className="text-yellow-600 mt-0.5">·</span>
-                    <span>{s}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {state === "error" && (
-        <p className="text-xs text-red-400 mt-1">{error}</p>
-      )}
+      <footer className="border-t border-gray-800 px-6 py-6 text-center text-xs text-gray-600">
+        Built with{" "}
+        <a href="https://www.hyperbrowser.ai" target="_blank" rel="noopener noreferrer" className="text-emerald-700 hover:text-emerald-500">
+          Hyperbrowser
+        </a>{" "}
+        · ProspectIQ
+      </footer>
     </div>
   );
 }

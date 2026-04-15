@@ -60,7 +60,6 @@ all open job listings with titles and locations, and any strategic signals
     schema: CompanyProfileSchema,
     sessionOptions: {
       useStealth: true,
-      solveCaptchas: true,
     },
   });
 
@@ -91,13 +90,15 @@ export async function POST(request: Request) {
       const send = (data: object) =>
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
 
-      await Promise.allSettled(
-        list.map(async (domain) => {
-          send({ event: "started", domain });
+      for (const domain of list) {
+        send({ event: "started", domain });
+        try {
           const result = await enrichDomain(domain);
           send({ event: "result", ...result });
-        })
-      );
+        } catch (err) {
+          send({ event: "result", domain, status: "error", error: String(err) });
+        }
+      }
 
       send({ event: "done" });
       controller.close();

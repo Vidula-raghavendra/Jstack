@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "skills": {
+    "Frontend Responsive Design Standards": {
+      "source": "am-will/codex-skills",
+      "sourceType": "github",
+      "computedHash": "e01516e24ba086a603fdf753f9b4e428a3684fbf3010b9295352202fd3461fa8"
+    },
+    "apple-hig": {
+      "source": "skills.volces.com",
+      "sourceType": "well-known",
+      "computedHash": "eb7a017daa8ceafee48d94e9f8ea5db10f0bbed5692fea18e621934baae746fe"
+    },
+    "design-taste-frontend": {
+      "source": "leonxlnx/taste-skill",
+      "sourceType": "github",
+      "computedHash": "d823593e24d7493ab740db8f082cbe3b148ed29af9e804d11f5302ad79e4b96d"
+    },
+    "framer-motion-animator": {
+      "source": "patricio0312rev/skills",
+      "sourceType": "github",
+      "computedHash": "22a8401fab0cdf32d5c153b98aba5e95435a479810896879535dc7ac3710efbe"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "516bd2154eb843a8240e43d5b285229129853114ad7075a5e141e1c08e408c84"
+    },
+    "premium-frontend-ui": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "computedHash": "e7f3d02a0233beafdd6fe5335427388109b9699ebcdc6a8782a8bada2826d916"
+    },
+    "ui-ux-master": {
+      "source": "skills.volces.com",
+      "sourceType": "well-known",
+      "computedHash": "93d52fef6e9968d4cf8ebd91c6d15c584d784042797720e06b28c65d7095a762"
+    },
+    "ui-ux-pro-max": {
+      "source": "kimny1143/claude-code-template",
+      "sourceType": "github",
+      "computedHash": "b6f3a46da860714b6b7c733abc81d6ccb71018666ba46f478ebb5f43cefcf361"
+    }
+  }
+}

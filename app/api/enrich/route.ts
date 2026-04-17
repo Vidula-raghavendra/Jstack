@@ -21,6 +21,13 @@ const CompanyProfileSchema = z.object({
   teamSizeEstimate: z.string().optional().describe("Approximate headcount range, e.g. '10-50', '50-200'"),
   foundedYear: z.string().optional().describe("Year the company was founded if mentioned"),
   keySignals: z.array(z.string()).describe("3-5 notable, specific signals: e.g. 'Hiring 5 ML engineers suggesting AI product push', 'Migrating from Python to Rust per job requirements'"),
+  people: z.array(z.object({
+    name: z.string().describe("Full name of the person"),
+    role: z.string().optional().describe("Their role/title at the company, e.g. 'CEO', 'Head of Engineering', 'Founding Engineer'"),
+    linkedin: z.string().optional().describe("Full LinkedIn profile URL if publicly listed on the company site (e.g. https://linkedin.com/in/...)"),
+    email: z.string().optional().describe("Public email address if explicitly listed on the company site (only include if shown publicly — do not guess)"),
+    twitter: z.string().optional().describe("Twitter/X profile URL if listed publicly"),
+  })).describe("People currently working at the company found on the team/about/leadership pages — include name, role, and any publicly listed LinkedIn URLs or emails. Do not invent contact info that is not present on the page.").default([]),
   socialLinks: z.object({
     twitter: z.string().optional(),
     linkedin: z.string().optional(),
@@ -51,12 +58,29 @@ async function enrichDomain(domain: string): Promise<EnrichResult> {
       `https://${clean}/careers`,
       `https://${clean}/jobs`,
       `https://${clean}/about`,
+      `https://${clean}/team`,
+      `https://${clean}/about/team`,
+      `https://${clean}/people`,
+      `https://${clean}/leadership`,
+      `https://${clean}/about-us`,
+      `https://${clean}/contact`,
     ],
     prompt: `Extract a comprehensive company intelligence profile.
 Focus especially on: what the company builds, who their customers are,
 their technology choices (from job requirements, engineering blog, etc.),
 all open job listings with titles and locations, and any strategic signals
-(funding news, new product launches, major hiring pushes, technology migrations).`,
+(funding news, new product launches, major hiring pushes, technology migrations).
+
+For the "people" field: collect every person currently working at the company that
+is listed on the team/about/leadership/contact pages. For each person include:
+  - their full name (required)
+  - their role or title if shown
+  - the FULL LinkedIn profile URL if it is publicly linked from the page
+  - any public email address that is explicitly shown next to them
+  - any public Twitter/X profile linked from their bio
+Do NOT invent or guess emails or LinkedIn URLs — only include data that is actually
+present on the company's own pages. Prefer founders, executives, and engineering
+leaders when there are many people.`,
     schema: CompanyProfileSchema,
     sessionOptions: {
       useStealth: true,

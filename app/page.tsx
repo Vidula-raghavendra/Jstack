@@ -973,10 +973,10 @@ function MorphScene() {
 
 /* ─────────────── FEATURES ─────────────── */
 const FEATURES = [
-  { n: "01", title: "Stealth sessions",     body: "Each domain gets its own fingerprint-spoofed Hyperbrowser session. Greenhouse, Lever, Workday — bypassed automatically." },
-  { n: "02", title: "AI-structured output", body: "Not raw HTML. Typed fields: tech stack inferred from job requirements, velocity from role count, signals from copy." },
-  { n: "03", title: "Live streaming",       body: "Results stream back as each domain resolves. Watch intelligence build in real time, not after a spinner finishes." },
-  { n: "04", title: "Export & history",     body: "Every run saved locally. One-click CSV for your CRM, Notion, or spreadsheet — whenever you need it." },
+  { n: "01", title: "Stealth crawl",        body: "Each domain gets its own fingerprint-spoofed Hyperbrowser session. Greenhouse, Lever, Workday, Ashby — bypassed automatically. The wedge no other GTM tool actually has." },
+  { n: "02", title: "Pack-aware extraction", body: "SDR, Recruiter, or VC. The pack you pick changes which URLs we hit, which fields we prioritise, which people we surface, and what the CSV looks like." },
+  { n: "03", title: "MCP server included",  body: "JSON-RPC 2.0 endpoint at /api/mcp. Wire ProspectIQ into Cursor or Claude Desktop and call enrich_companies inline — no copy-paste between tools." },
+  { n: "04", title: "Pack-shaped CSV",      body: "Every export tailored to its pack — SDR gets buying signals + people, Recruiter gets roles + stack, VC gets funding + investors. Drops straight into Clay, Notion, or a deal sheet." },
 ];
 
 function FeatureRow({ n, title, body, index }: typeof FEATURES[0] & { index: number }) {
@@ -990,8 +990,8 @@ function FeatureRow({ n, title, body, index }: typeof FEATURES[0] & { index: num
       onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       className="grid grid-cols-[56px_1fr_1fr] gap-8 items-start py-9 border-b relative overflow-hidden"
       style={{ borderColor: C.border }}>
-      <motion.div className="absolute left-0 top-0 bottom-0 w-0.5" style={{ background: C.sage }}
-        initial={{ scaleY: 0, transformOrigin: "top" }}
+      <motion.div className="absolute left-0 top-0 bottom-0 w-0.5" style={{ background: C.sage, transformOrigin: "top" }}
+        initial={{ scaleY: 0 }}
         animate={{ scaleY: hov ? 1 : 0 }}
         transition={{ duration: 0.35, ease: E }} />
       <motion.span animate={{ x: hov ? 5 : 0 }} transition={{ duration: 0.3, ease: E }}
@@ -1006,15 +1006,32 @@ function FeatureRow({ n, title, body, index }: typeof FEATURES[0] & { index: num
   );
 }
 
-/* ─────────────── USE CASES — 3D TILT ─────────────── */
+/* ─────────────── PACKS — 3D TILT ─────────────── */
 const USECASES = [
-  { role: "Sales",      headline: "Know before you dial.",          body: "Walk in knowing their stack, growth stage, and pain — before the first call.", color: C.sage   },
-  { role: "Recruiting", headline: "Find the pull, not the push.",   body: "Surface companies actively hiring in your niche. Know what they need before you reach out.", color: C.butter },
-  { role: "Investors",  headline: "Hiring is a leading indicator.", body: "Velocity and stack signal trajectory better than a pitch deck ever will.", color: C.rose   },
-  { role: "Founders",   headline: "Watch competition breathe.",     body: "Know when they hire and what they're building — before it shows up on TechCrunch.", color: C.indigo },
+  {
+    role: "SDR Pack",
+    headline: "Buying signals + decision-makers.",
+    body: "Pricing model. Named customer logos. Recent product launches. Plus founders, VPs, and Heads-of with publicly listed contact info — never invented.",
+    sample: "Hiring 5 senior infra engineers with explicit Kubernetes + Rust",
+    color: C.sage,
+  },
+  {
+    role: "Recruiter Pack",
+    headline: "Hiring trajectory + tech stack.",
+    body: "Every open role with title, team, and location. Languages, frameworks, and clouds explicitly named in job posts. Engineering leaders linked from team pages.",
+    sample: "12 open roles · Migrating from Python to Rust per backend JD",
+    color: C.butter,
+  },
+  {
+    role: "VC Pack",
+    headline: "Funding + traction + team caliber.",
+    body: "Funding stage and named investors from press pages. Customer logos as traction proof. Founder backgrounds and exec team with LinkedIn URLs from the about page.",
+    sample: "Series B led by Accel · Notion + Vercel listed as customers",
+    color: C.indigo,
+  },
 ];
 
-function UsecaseCard({ role, headline, body, color, index }: typeof USECASES[0] & { index: number }) {
+function UsecaseCard({ role, headline, body, sample, color, index }: typeof USECASES[0] & { index: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-5% 0px" });
   const cardRef = useRef<HTMLDivElement>(null);
@@ -1051,7 +1068,13 @@ function UsecaseCard({ role, headline, body, color, index }: typeof USECASES[0] 
         </div>
         <div style={{ fontFamily: "'Geist Mono', monospace", color, fontSize: 9 }} className="uppercase tracking-[0.18em] mb-3">{role}</div>
         <div style={{ fontFamily: "'Cormorant Garant', serif", color: C.text, fontWeight: 500, fontSize: "clamp(22px,2.2vw,28px)", letterSpacing: "-0.01em", lineHeight: 1.2 }} className="mb-4">{headline}</div>
-        <p style={{ color: C.muted, fontSize: 14, lineHeight: 1.75 }}>{body}</p>
+        <p style={{ color: C.muted, fontSize: 14, lineHeight: 1.75 }} className="mb-5">{body}</p>
+        <div className="rounded-lg px-3 py-2.5 relative overflow-hidden"
+          style={{ background: `${color}0E`, border: `1px dashed ${color}40` }}>
+          <div className="absolute left-0 top-0 bottom-0 w-[2px]" style={{ background: color }} />
+          <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 8, color }} className="uppercase tracking-[0.18em] mb-1">Sample signal</div>
+          <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, color: C.text, lineHeight: 1.5 }}>{sample}</div>
+        </div>
         {/* Shine overlay */}
         <motion.div className="absolute inset-0 rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100"
           style={{ background: `linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 60%)` }} />
@@ -1164,12 +1187,12 @@ export default function LandingPage() {
                 <motion.span className="w-1.5 h-1.5 rounded-full" style={{ background: C.green }}
                   animate={{ scale: [1, 1.6, 1] }} transition={{ duration: 2, repeat: Infinity }} />
                 <span style={{ fontFamily: "'Geist Mono', monospace", color: C.muted, fontSize: 10 }}
-                  className="uppercase tracking-[0.12em]">Live enrichment · No signup required</span>
+                  className="uppercase tracking-[0.12em]">MCP-native · Built on Hyperbrowser stealth</span>
               </motion.div>
 
               {[
-                { text: "Company intelligence,", delay: 0.6,  italic: false, color: C.text },
-                { text: "on demand.",             delay: 0.75, italic: true,  color: C.sage },
+                { text: "Three packs.",            delay: 0.6,  italic: false, color: C.text },
+                { text: "One stealth crawl.",      delay: 0.75, italic: true,  color: C.sage },
               ].map(({ text, delay, italic, color }) => (
                 <div key={text} className="overflow-hidden">
                   <motion.div
@@ -1191,10 +1214,13 @@ export default function LandingPage() {
               <motion.p
                 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.9, delay: 1.0, ease: E }}
-                style={{ color: C.muted, fontSize: 17, lineHeight: 1.75, maxWidth: 400, fontWeight: 300 }}
+                style={{ color: C.muted, fontSize: 17, lineHeight: 1.75, maxWidth: 440, fontWeight: 300 }}
                 className="mt-8 mb-10">
-                Paste any list of company domains. Stream back structured intelligence
-                — hiring signals, tech stack, funding stage — instantly.
+                Pick a lens — <span style={{ color: C.sage }}>SDR</span>,{" "}
+                <span style={{ color: C.butter }}>Recruiter</span>, or{" "}
+                <span style={{ color: C.indigo }}>VC</span>. Stealth-scrape any company.
+                Get pack-specific signals streamed in 60 seconds — usable from the app
+                or as an MCP tool inside Cursor and Claude.
               </motion.p>
 
               <motion.div
@@ -1208,8 +1234,8 @@ export default function LandingPage() {
               <motion.div className="flex items-center gap-3 mt-10"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.2 }}>
                 <motion.div className="w-10 h-px"
-                  style={{ background: `linear-gradient(to right, ${C.sage}, transparent)` }}
-                  animate={{ scaleX: [0, 1, 0], transformOrigin: "left" }}
+                  style={{ background: `linear-gradient(to right, ${C.sage}, transparent)`, transformOrigin: "left" }}
+                  animate={{ scaleX: [0, 1, 0] }}
                   transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }} />
                 <span style={{ fontFamily: "'Geist Mono', monospace", color: C.dim, fontSize: 9 }}
                   className="uppercase tracking-[0.2em]">Scroll</span>
@@ -1263,7 +1289,7 @@ export default function LandingPage() {
                   style={{ fontFamily: "'Cormorant Garant', serif", color: C.text, fontWeight: 400, fontSize: "clamp(30px,4vw,52px)", letterSpacing: "-0.02em", lineHeight: 1.15 }}
                   initial={{ y: "110%", opacity: 0 }} whileInView={{ y: "0%", opacity: 1 }}
                   viewport={{ once: true }} transition={{ duration: 0.9, ease: E }}>
-                  Everything you need to know<br /><em style={{ color: C.sage }}>about any company.</em>
+                  Stealth scrape.<br /><em style={{ color: C.sage }}>Pack-aware extract.</em>
                 </motion.div>
               </div>
             </div>
@@ -1290,25 +1316,29 @@ export default function LandingPage() {
           </motion.div>
         </div>
 
-        {/* ══ USE CASES ══ */}
-        <section className="py-20" id="usecases">
+        {/* ══ PACKS ══ */}
+        <section className="py-20" id="packs">
           <div className="max-w-[1280px] mx-auto px-6 lg:px-12">
             <div className="mb-10">
               <motion.div style={{ fontFamily: "'Geist Mono', monospace", color: C.sage, fontSize: 10 }}
                 className="uppercase tracking-[0.16em] mb-5"
                 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
-                / Who uses this
+                / Three packs
               </motion.div>
               <div className="overflow-hidden">
                 <motion.div
                   style={{ fontFamily: "'Cormorant Garant', serif", color: C.text, fontWeight: 400, fontSize: "clamp(30px,4vw,52px)", letterSpacing: "-0.02em", lineHeight: 1.15 }}
                   initial={{ y: "110%", opacity: 0 }} whileInView={{ y: "0%", opacity: 1 }}
                   viewport={{ once: true }} transition={{ duration: 0.9, ease: E }}>
-                  Built for people<br /><em style={{ color: C.butter }}>who need an edge.</em>
+                  Same crawl.<br /><em style={{ color: C.butter }}>Three lenses.</em>
                 </motion.div>
               </div>
+              <p style={{ color: C.muted, fontSize: 15, lineHeight: 1.7, maxWidth: 560 }} className="mt-5">
+                One stealth scrape per company. The pack you pick decides which signals get
+                surfaced, which people get prioritised, and how the CSV exports.
+              </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {USECASES.map((u, i) => <UsecaseCard key={u.role} {...u} index={i} />)}
             </div>
           </div>
@@ -1316,6 +1346,91 @@ export default function LandingPage() {
 
         {/* ══ MORPH SCENE — image morph + 3D atmosphere ══ */}
         <MorphScene />
+
+        {/* ══ MCP SECTION ══ */}
+        <section className="relative py-24 border-t overflow-hidden" id="mcp" style={{ borderColor: C.border, background: C.surface }}>
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-0 left-0 w-[600px] h-[600px]"
+              style={{ background: `radial-gradient(circle at 20% 30%, ${C.sageLo} 0%, transparent 60%)` }} />
+            <div className="absolute bottom-0 right-0 w-[500px] h-[500px]"
+              style={{ background: `radial-gradient(circle at 80% 70%, rgba(114,121,184,0.10) 0%, transparent 60%)` }} />
+          </div>
+
+          <div className="max-w-[1280px] mx-auto px-6 lg:px-12 relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.1fr] gap-12 items-center">
+              <div>
+                <motion.div style={{ fontFamily: "'Geist Mono', monospace", color: C.indigo, fontSize: 10 }}
+                  className="uppercase tracking-[0.16em] mb-5"
+                  initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}>
+                  / MCP-native
+                </motion.div>
+                <div className="overflow-hidden mb-6">
+                  <motion.div
+                    style={{ fontFamily: "'Cormorant Garant', serif", color: C.text, fontWeight: 400, fontSize: "clamp(32px,4.2vw,56px)", letterSpacing: "-0.02em", lineHeight: 1.1 }}
+                    initial={{ y: "110%", opacity: 0 }} whileInView={{ y: "0%", opacity: 1 }}
+                    viewport={{ once: true }} transition={{ duration: 0.9, ease: E }}>
+                    Plug it into<br /><em style={{ color: C.indigo }}>Cursor or Claude.</em>
+                  </motion.div>
+                </div>
+                <motion.p style={{ color: C.muted, fontSize: 16, lineHeight: 1.7, maxWidth: 480 }}
+                  initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.2 }}
+                  className="mb-6">
+                  ProspectIQ ships as a JSON-RPC 2.0 MCP server at{" "}
+                  <code style={{ fontFamily: "'Geist Mono', monospace", fontSize: 13, color: C.text, background: C.card, padding: "2px 8px", borderRadius: 6, border: `1px solid ${C.border}` }}>
+                    /api/mcp
+                  </code>
+                  . Wire it into Claude Desktop or Cursor and call{" "}
+                  <code style={{ fontFamily: "'Geist Mono', monospace", fontSize: 13, color: C.text, background: C.card, padding: "2px 8px", borderRadius: 6, border: `1px solid ${C.border}` }}>
+                    enrich_companies
+                  </code>{" "}
+                  inline — same stealth crawler, three packs, no context switch.
+                </motion.p>
+                <motion.div
+                  initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.35 }}
+                  className="flex flex-wrap gap-2">
+                  {["enrich_companies", "list_packs", "stealth-via-Hyperbrowser"].map(t => (
+                    <span key={t} style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, color: C.muted, background: C.card, border: `1px solid ${C.border}` }}
+                      className="px-3 py-1.5 rounded-full">
+                      {t}
+                    </span>
+                  ))}
+                </motion.div>
+              </div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ duration: 0.9, ease: E }}
+                className="rounded-2xl overflow-hidden relative"
+                style={{ background: "#1A1714", border: `1px solid ${C.border}`, boxShadow: "0 30px 80px rgba(0,0,0,0.18)" }}>
+                <div className="flex items-center gap-1.5 px-4 py-3 border-b" style={{ borderColor: "#2A2520" }}>
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#FF5F56" }} />
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#FFBD2E" }} />
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ background: "#27C93F" }} />
+                  <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, color: "#666060" }} className="ml-3 uppercase tracking-widest">claude_desktop_config.json</span>
+                </div>
+                <pre style={{ fontFamily: "'Geist Mono', monospace", fontSize: 12.5, lineHeight: 1.7, color: "#E8E2D7", padding: "20px 24px", margin: 0, overflow: "auto" }}>{`{
+  "mcpServers": {
+    "prospectiq": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://your.app/api/mcp"
+      ]
+    }
+  }
+}`}</pre>
+                <div className="px-6 py-4 border-t" style={{ borderColor: "#2A2520" }}>
+                  <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, color: "#666060" }} className="uppercase tracking-widest">$ then in claude</span>
+                  <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 13, color: "#A3C49A", marginTop: 6 }}>
+                    {">"} enrich stripe.com and linear.app with the SDR pack
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </section>
 
         {/* ══ CTA ══ */}
         <section className="relative py-24 overflow-hidden border-t" style={{ borderColor: C.border, background: C.card }}>
@@ -1338,10 +1453,11 @@ export default function LandingPage() {
                 Start knowing.
               </motion.div>
             </div>
-            <motion.p style={{ color: C.muted, fontSize: 17, lineHeight: 1.8, fontWeight: 300, maxWidth: 420, margin: "0 auto 48px" }}
+            <motion.p style={{ color: C.muted, fontSize: 17, lineHeight: 1.8, fontWeight: 300, maxWidth: 460, margin: "0 auto 48px" }}
               initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.3 }}>
-              Every sales rep, recruiter, and investor who uses ProspectIQ walks in more prepared than the competition.
+              SDR, Recruiter, or VC. Pick your lens. Get pack-specific signals streamed
+              straight from a stealth Hyperbrowser session — in the app or via MCP.
             </motion.p>
             <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.5 }}
@@ -1357,12 +1473,14 @@ export default function LandingPage() {
           <span style={{ fontFamily: "'Cormorant Garant', serif", color: C.text, fontWeight: 600, fontSize: 18, letterSpacing: "-0.02em" }}>
             Prospect<span style={{ color: C.sage }}>IQ</span>
           </span>
-          <span style={{ fontFamily: "'Geist Mono', monospace", color: C.dim, fontSize: 10 }} className="uppercase tracking-widest">
-            Built with{" "}
-            <a href="https://www.hyperbrowser.ai" target="_blank" rel="noopener noreferrer"
-              style={{ color: C.muted }} className="hover:text-[#1A1714] transition-colors">Hyperbrowser</a>
-            {" "}+ Claude AI
-          </span>
+          <a href="https://www.hyperbrowser.ai" target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full transition-all hover:-translate-y-px"
+            style={{ background: C.card, border: `1px solid ${C.border}`, boxShadow: "0 2px 12px rgba(0,0,0,0.04)" }}>
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: C.sage }} />
+            <span style={{ fontFamily: "'Geist Mono', monospace", color: C.muted, fontSize: 10 }} className="uppercase tracking-[0.16em]">
+              Stealth-powered by <span style={{ color: C.text, fontWeight: 500 }}>Hyperbrowser</span>
+            </span>
+          </a>
         </footer>
 
         <style>{`

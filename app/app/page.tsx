@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import type { CompanyProfile, EnrichResult } from "../api/enrich/route";
+import type { CompanyProfile, EnrichResult, Pack } from "../api/enrich/route";
 
 /* ─── pastel tokens — matches landing page ─── */
 const C = {
@@ -37,7 +37,20 @@ interface HistoryEntry {
   domains: string[];
   results: Row[];
   runAt: string;
+  pack: Pack;
 }
+
+const PACKS: { id: Pack; label: string; sub: string; accent: string; tag: string }[] = [
+  { id: "sdr",       label: "SDR Pack",       sub: "Buying signals + decision-makers",     accent: "#6A9970", tag: "outbound sales" },
+  { id: "recruiter", label: "Recruiter Pack", sub: "Hiring trajectory + tech stack",        accent: "#C9A83C", tag: "talent intel" },
+  { id: "vc",        label: "VC Pack",        sub: "Funding + traction + team caliber",     accent: "#7279B8", tag: "investment screening" },
+];
+
+const PACK_PRESETS: Record<Pack, string[]> = {
+  sdr:       ["stripe.com", "linear.app", "vercel.com", "clerk.com", "resend.com", "hyperbrowser.ai"],
+  recruiter: ["openai.com", "anthropic.com", "perplexity.ai", "cursor.com", "supabase.com", "modal.com"],
+  vc:        ["browserbase.com", "hyperbrowser.ai", "browser-use.com", "elevenlabs.io", "windsurf.com", "rerun.io"],
+};
 
 const VELOCITY_CONFIG: Record<string, { label: string; bars: number }> = {
   none:       { label: "Not hiring",     bars: 0 },
@@ -53,8 +66,6 @@ const VEL_COLORS: Record<string, string> = {
   aggressive: C.sage,
 };
 
-const PRESETS = ["stripe.com", "linear.app", "vercel.com", "clerk.com", "resend.com", "hyperbrowser.ai"];
-
 function SignalBars({ velocity }: { velocity: string }) {
   const bars = VELOCITY_CONFIG[velocity]?.bars ?? 0;
   const color = VEL_COLORS[velocity] ?? C.dim;
@@ -67,18 +78,42 @@ function SignalBars({ velocity }: { velocity: string }) {
   );
 }
 
-function exportToCSV(rows: Row[]) {
+const PACK_CSV: Record<Pack, { headers: string[]; row: (r: Row) => string[] }> = {
+  sdr: {
+    headers: ["Domain","Name","Category","Pricing Model","Named Customers","Recent Launches","People (name | role | linkedin | email)","Buying Signals","Scraped At"],
+    row: (r) => {
+      const p = r.profile!;
+      const people = (p.people ?? []).map(x => `${x.name} | ${x.role ?? ""} | ${x.linkedin ?? ""} | ${x.email ?? ""}`).join("; ");
+      return [r.domain, p.name, p.productCategory, p.pricingModel ?? "", (p.namedCustomers ?? []).join("; "), (p.recentLaunches ?? []).join("; "), people, (p.signals?.buying ?? []).join("; "), r.scrapedAt ?? ""];
+    },
+  },
+  recruiter: {
+    headers: ["Domain","Name","Category","Hiring Velocity","Open Roles Count","Open Roles (title @ location)","Tech Stack","Engineering Leaders","Hiring Signals","Scraped At"],
+    row: (r) => {
+      const p = r.profile!;
+      const roles = (p.openRoles ?? []).map(j => `${j.title}${j.location ? ` @ ${j.location}` : ""}`).join("; ");
+      const engLeads = (p.people ?? []).filter(x => /eng|cto|tech|head|vp|director|founding/i.test(x.role ?? "")).map(x => `${x.name} | ${x.role ?? ""} | ${x.linkedin ?? ""}`).join("; ");
+      return [r.domain, p.name, p.productCategory, p.hiringVelocity, String(p.openRoles?.length ?? 0), roles, (p.techStack ?? []).join("; "), engLeads, (p.signals?.hiring ?? []).join("; "), r.scrapedAt ?? ""];
+    },
+  },
+  vc: {
+    headers: ["Domain","Name","Category","Funding Stage","Investors","Team Size","Founded","Founders/Execs (name | role | linkedin)","Named Customers","Recent Launches","Investment Signals","Scraped At"],
+    row: (r) => {
+      const p = r.profile!;
+      const execs = (p.people ?? []).filter(x => /ceo|cto|coo|cfo|founder|president/i.test(x.role ?? "")).map(x => `${x.name} | ${x.role ?? ""} | ${x.linkedin ?? ""}`).join("; ");
+      return [r.domain, p.name, p.productCategory, p.fundingStage ?? "", (p.investors ?? []).join("; "), p.teamSizeEstimate ?? "", p.foundedYear ?? "", execs, (p.namedCustomers ?? []).join("; "), (p.recentLaunches ?? []).join("; "), (p.signals?.investment ?? []).join("; "), r.scrapedAt ?? ""];
+    },
+  },
+};
+
+function exportToCSV(rows: Row[], pack: Pack) {
   const ok = rows.filter(r => r.state === "ok" && r.profile);
-  const headers = ["Domain","Name","Category","Customers","Tech Stack","Open Roles","Hiring Velocity","Funding","Team Size","Key Signals","Scraped At"];
-  const lines = ok.map(r => {
-    const p = r.profile!;
-    return [r.domain, p.name, p.productCategory, p.customers, p.techStack.join("; "), p.openRoles.map(j => j.title).join("; "), p.hiringVelocity, p.fundingStage ?? "", p.teamSizeEstimate ?? "", p.keySignals.join("; "), r.scrapedAt ?? ""]
-      .map(v => `"${String(v).replace(/"/g, '""')}"`).join(",");
-  });
-  const blob = new Blob([[headers.join(","), ...lines].join("\n")], { type: "text/csv" });
+  const cfg = PACK_CSV[pack];
+  const lines = ok.map(r => cfg.row(r).map(v => `"${String(v).replace(/"/g, '""')}"`).join(","));
+  const blob = new Blob([[cfg.headers.join(","), ...lines].join("\n")], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = `prospectiq-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+  a.href = url; a.download = `prospectiq-${pack}-${new Date().toISOString().slice(0,10)}.csv`; a.click();
   URL.revokeObjectURL(url);
 }
 
@@ -91,14 +126,17 @@ export default function AppPage() {
   const [expanded, setExpanded]         = useState<Set<string>>(new Set());
   const [history, setHistory]           = useState<HistoryEntry[]>([]);
   const [activeHistoryId, setActiveHistoryId] = useState<string|null>(null);
+  const [pack, setPack]                 = useState<Pack>("sdr");
   const abortRef = useRef<AbortController|null>(null);
+
+  const packCfg = PACKS.find(p => p.id === pack)!;
 
   useEffect(() => {
     try { const s = localStorage.getItem("prospectiq-history"); if (s) setHistory(JSON.parse(s)); } catch { /* ignore */ }
   }, []);
 
-  function saveHistory(newRows: Row[], domains: string[]) {
-    const entry: HistoryEntry = { id: crypto.randomUUID(), domains, results: newRows, runAt: new Date().toISOString() };
+  function saveHistory(newRows: Row[], domains: string[], runPack: Pack) {
+    const entry: HistoryEntry = { id: crypto.randomUUID(), domains, results: newRows, runAt: new Date().toISOString(), pack: runPack };
     setHistory(prev => { const updated = [entry, ...prev].slice(0, 20); localStorage.setItem("prospectiq-history", JSON.stringify(updated)); return updated; });
     setActiveHistoryId(entry.id);
   }
@@ -113,13 +151,14 @@ export default function AppPage() {
 
   async function run(domains: string[]) {
     if (!domains.length || running) return;
+    const runPack = pack;
     abortRef.current?.abort();
     abortRef.current = new AbortController();
     setRunning(true); setActiveHistoryId(null);
     const initial: Row[] = domains.map(d => ({ domain: d, state: "pending" }));
     setRows(initial);
     try {
-      const res = await fetch("/api/enrich", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ domains }), signal: abortRef.current.signal });
+      const res = await fetch("/api/enrich", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ domains, pack: runPack }), signal: abortRef.current.signal });
       if (!res.body) throw new Error("No stream");
       const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = ""; let finalRows: Row[] = [...initial];
       while (true) {
@@ -130,7 +169,7 @@ export default function AppPage() {
           const payload = JSON.parse(line.slice(6)) as EnrichResult & { event: string };
           if (payload.event === "started") { finalRows = finalRows.map(r => r.domain === payload.domain ? { ...r, state: "loading" } : r); setRows([...finalRows]); }
           else if (payload.event === "result") { finalRows = finalRows.map(r => r.domain === payload.domain ? { ...r, state: payload.status === "ok" ? "ok" : "error", profile: payload.profile, error: payload.error, scrapedAt: payload.scrapedAt } : r); setRows([...finalRows]); }
-          else if (payload.event === "done") { saveHistory(finalRows, domains); }
+          else if (payload.event === "done") { saveHistory(finalRows, domains, runPack); }
         }
       }
     } catch (e) { if ((e as Error).name !== "AbortError") console.error(e); }
@@ -158,10 +197,10 @@ export default function AppPage() {
         </Link>
         <div className="flex items-center gap-3">
           {rows.some(r => r.state === "ok") && (
-            <button onClick={() => exportToCSV(rows)}
+            <button onClick={() => exportToCSV(rows, pack)}
               style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, color: C.muted, border: `1px solid ${C.border}` }}
               className="px-3 py-1.5 rounded-lg hover:border-[#C8C2B8] hover:text-[#1A1714] transition-all">
-              Export CSV ↓
+              Export {pack.toUpperCase()} CSV ↓
             </button>
           )}
           {running && (
@@ -186,25 +225,58 @@ export default function AppPage() {
                 className="hover:text-[#B87E70] transition-colors">clear</button>
             </div>
             <div className="space-y-0.5">
-              {history.map(entry => (
-                <button key={entry.id}
-                  onClick={() => { setRows(entry.results); setActiveHistoryId(entry.id); setInput(entry.domains.join("\n")); }}
-                  className="w-full text-left px-2.5 py-2 rounded-lg transition-colors"
-                  style={{ background: activeHistoryId === entry.id ? C.card : "transparent", color: activeHistoryId === entry.id ? C.text : C.muted }}>
-                  <div style={{ fontSize: 12, fontWeight: 500 }} className="truncate">
-                    {entry.domains.slice(0, 2).join(", ")}{entry.domains.length > 2 ? ` +${entry.domains.length - 2}` : ""}
-                  </div>
-                  <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, color: C.dim }} className="mt-0.5">
-                    {new Date(entry.runAt).toLocaleDateString()}
-                  </div>
-                </button>
-              ))}
+              {history.map(entry => {
+                const ep = PACKS.find(p => p.id === entry.pack) ?? PACKS[0];
+                return (
+                  <button key={entry.id}
+                    onClick={() => { setRows(entry.results); setActiveHistoryId(entry.id); setInput(entry.domains.join("\n")); if (entry.pack) setPack(entry.pack); }}
+                    className="w-full text-left px-2.5 py-2 rounded-lg transition-colors"
+                    style={{ background: activeHistoryId === entry.id ? C.card : "transparent", color: activeHistoryId === entry.id ? C.text : C.muted }}>
+                    <div style={{ fontSize: 12, fontWeight: 500 }} className="truncate">
+                      {entry.domains.slice(0, 2).join(", ")}{entry.domains.length > 2 ? ` +${entry.domains.length - 2}` : ""}
+                    </div>
+                    <div className="flex items-center justify-between mt-0.5">
+                      <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, color: C.dim }}>
+                        {new Date(entry.runAt).toLocaleDateString()}
+                      </span>
+                      <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 8, color: ep.accent, background: `${ep.accent}14`, border: `1px solid ${ep.accent}30` }}
+                        className="px-1.5 py-0.5 rounded uppercase tracking-widest">{entry.pack ?? "sdr"}</span>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </aside>
         )}
 
         {/* Main */}
         <main className="flex-1 overflow-y-auto p-6 space-y-5">
+          {/* Pack picker */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            {PACKS.map(p => {
+              const active = p.id === pack;
+              return (
+                <button key={p.id} disabled={running} onClick={() => setPack(p.id)}
+                  className="text-left rounded-xl px-4 py-3 transition-all relative overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    background: active ? C.card : "transparent",
+                    border: `1px solid ${active ? p.accent : C.border}`,
+                    boxShadow: active ? `0 4px 24px ${p.accent}20` : "none",
+                  }}>
+                  {active && (
+                    <motion.div layoutId="pack-accent" className="absolute left-0 top-0 bottom-0 w-[3px]"
+                      style={{ background: p.accent }} transition={{ type: "spring", stiffness: 400, damping: 30 }} />
+                  )}
+                  <div className="flex items-baseline gap-2">
+                    <span style={{ fontFamily: "'Cormorant Garant', serif", fontSize: 18, fontWeight: 600, color: active ? C.text : C.muted, letterSpacing: "-0.01em" }}>{p.label}</span>
+                    <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9, color: active ? p.accent : C.dim }} className="uppercase tracking-[0.15em]">{p.tag}</span>
+                  </div>
+                  <p style={{ fontSize: 11, color: active ? C.muted : C.dim, marginTop: 2 }}>{p.sub}</p>
+                </button>
+              );
+            })}
+          </div>
+
           {/* Input */}
           <div className="space-y-3">
             <form onSubmit={e => { e.preventDefault(); run(parseDomains(input)); }}>
@@ -216,20 +288,22 @@ export default function AppPage() {
                   className="flex-1 focus:outline-none focus:border-[#6A9970] focus:shadow-[0_0_0_3px_rgba(106,153,112,0.12)] rounded-xl px-4 py-3 placeholder-[#B8B0A5] transition-all resize-none"
                 />
                 <button type="submit" disabled={running || !input.trim()}
-                  style={{ background: C.sage, color: "#fff", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13 }}
-                  className="px-6 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(106,153,112,0.3)]">
-                  {running ? "Running..." : "Enrich →"}
+                  style={{ background: packCfg.accent, color: "#fff", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13 }}
+                  className="px-6 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(0,0,0,0.15)]">
+                  {running ? "Running..." : `Run ${packCfg.label} →`}
                 </button>
               </div>
             </form>
 
             <div className="flex flex-wrap gap-2 items-center">
               <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, color: C.dim }}>Quick add:</span>
-              {PRESETS.map(d => (
+              {PACK_PRESETS[pack].map(d => (
                 <button key={d} type="button"
                   style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, color: C.muted, background: C.card, border: `1px solid ${C.border}` }}
                   onClick={() => setInput(p => { const ex = parseDomains(p); if (ex.includes(d)) return p; return p ? `${p.trim()}\n${d}` : d; })}
-                  className="px-3 py-1 rounded-full hover:border-[#6A9970] hover:text-[#6A9970] transition-all">
+                  className="px-3 py-1 rounded-full transition-all"
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = packCfg.accent; (e.currentTarget as HTMLElement).style.color = packCfg.accent; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border; (e.currentTarget as HTMLElement).style.color = C.muted; }}>
                   + {d}
                 </button>
               ))}
@@ -262,7 +336,7 @@ export default function AppPage() {
           <AnimatePresence initial={false}>
             <div className="space-y-2">
               {filteredRows.map((row, i) => (
-                <CompanyCard key={row.domain} row={row} index={i} expanded={expanded.has(row.domain)} onToggle={() => toggleExpand(row.domain)} />
+                <CompanyCard key={row.domain} row={row} index={i} expanded={expanded.has(row.domain)} onToggle={() => toggleExpand(row.domain)} pack={pack} />
               ))}
             </div>
           </AnimatePresence>
@@ -285,10 +359,13 @@ export default function AppPage() {
   );
 }
 
-function CompanyCard({ row, expanded, onToggle, index = 0 }: { row: Row; expanded: boolean; onToggle: () => void; index?: number }) {
+function CompanyCard({ row, expanded, onToggle, index = 0, pack }: { row: Row; expanded: boolean; onToggle: () => void; index?: number; pack: Pack }) {
   const { domain, state, profile, error } = row;
   const vel = profile ? VELOCITY_CONFIG[profile.hiringVelocity] ?? VELOCITY_CONFIG.none : null;
   const velColor = profile ? VEL_COLORS[profile.hiringVelocity] ?? C.dim : C.dim;
+  const packCfg = PACKS.find(p => p.id === pack)!;
+  const signalKey = pack === "sdr" ? "buying" : pack === "recruiter" ? "hiring" : "investment";
+  const packSignals = profile?.signals?.[signalKey] ?? [];
 
   return (
     <motion.div layout
@@ -355,12 +432,55 @@ function CompanyCard({ row, expanded, onToggle, index = 0 }: { row: Row; expande
       {expanded && state === "ok" && profile && (
         <div className="border-t px-4 py-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 text-[12px]"
           style={{ borderColor: C.border }}>
+          {/* Pack hero — the answer this pack exists to deliver */}
+          {packSignals.length > 0 && (
+            <div className="lg:col-span-3 rounded-xl px-4 py-3.5 relative overflow-hidden"
+              style={{ background: `${packCfg.accent}0A`, border: `1px solid ${packCfg.accent}30` }}>
+              <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: packCfg.accent }} />
+              <div className="flex items-center justify-between mb-2">
+                <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9, color: packCfg.accent }} className="uppercase tracking-[0.15em]">
+                  {packCfg.label} · {signalKey} signals
+                </span>
+                <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9, color: C.dim }}>{packSignals.length} found</span>
+              </div>
+              <ul className="space-y-1.5">
+                {packSignals.map((s, i) => (
+                  <motion.li key={i}
+                    initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.04, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                    className="flex items-start gap-2" style={{ color: C.text }}>
+                    <span style={{ color: packCfg.accent, fontSize: 14, lineHeight: 1.2 }} className="shrink-0">›</span>
+                    <span style={{ fontSize: 12, lineHeight: 1.5 }}>{s}</span>
+                  </motion.li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Pack-specific top-strip: SDR shows pricing+customers, Recruiter shows roles count, VC shows funding+investors */}
           <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4">
+            {pack === "sdr" && profile.pricingModel && profile.pricingModel !== "unknown" && <DetailCell label="Pricing model" value={profile.pricingModel} />}
+            {pack === "sdr" && profile.namedCustomers && profile.namedCustomers.length > 0 && <DetailCell label="Named customers" value={`${profile.namedCustomers.length} (${profile.namedCustomers.slice(0,3).join(", ")}${profile.namedCustomers.length>3?"…":""})`} />}
+            {pack === "recruiter" && <DetailCell label="Open roles" value={String(profile.openRoles?.length ?? 0)} />}
+            {pack === "recruiter" && <DetailCell label="Velocity" value={profile.hiringVelocity} />}
+            {pack === "vc" && profile.fundingStage && <DetailCell label="Stage" value={profile.fundingStage} />}
+            {pack === "vc" && profile.investors && profile.investors.length > 0 && <DetailCell label="Investors" value={profile.investors.slice(0,3).join(", ")} />}
             {profile.customers      && <DetailCell label="Customers"  value={profile.customers}      />}
-            {profile.fundingStage   && <DetailCell label="Funding"    value={profile.fundingStage}   />}
             {profile.teamSizeEstimate && <DetailCell label="Team size" value={profile.teamSizeEstimate} />}
             {profile.foundedYear    && <DetailCell label="Founded"    value={profile.foundedYear}    />}
           </div>
+
+          {/* Recent launches — relevant for SDR + VC */}
+          {(pack === "sdr" || pack === "vc") && profile.recentLaunches && profile.recentLaunches.length > 0 && (
+            <div className="lg:col-span-3">
+              <p style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9, color: C.dim }} className="uppercase tracking-[0.1em] mb-2">Recent launches</p>
+              <div className="flex flex-wrap gap-1.5">
+                {profile.recentLaunches.map((l, i) => (
+                  <span key={i} style={{ fontSize: 11, color: C.text, background: C.surface, border: `1px solid ${C.border}` }} className="px-2.5 py-1 rounded-lg">{l}</span>
+                ))}
+              </div>
+            </div>
+          )}
           {profile.techStack.length > 0 && (
             <div>
               <p style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9, color: C.dim }} className="uppercase tracking-[0.1em] mb-2">Full Tech Stack</p>

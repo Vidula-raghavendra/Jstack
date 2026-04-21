@@ -1,105 +1,93 @@
-# Design System — ProspectIQ
+# Design System — Lode
 
 ## Product Context
-- **What this is:** B2B lead enrichment tool — paste domains, get structured company intelligence streamed back live
-- **Who it's for:** Sales reps, recruiters, investors, founders doing competitive research
-- **Space/industry:** B2B devtools / sales intelligence (peers: Apollo, Clay, Hunter, Clearbit)
-- **Project type:** Web app (two pages: marketing landing + power-tool app)
+- **What this is:** B2B company intelligence — paste domains, get pack-specific signals extracted by stealth crawler
+- **Who it's for:** SDRs, recruiters, VCs, founders doing competitive research
+- **Space/industry:** B2B devtools / sales intelligence
+- **Project type:** Web app (landing + power-tool app)
+
+## Brand
+- **Name:** Lode
+- **Tagline:** "Intelligence runs deep."
+- **Voice:** Expert, unhurried, precise. We know the real value of any company. Not a dashboard — a dealer. Think fine art appraisal applied to B2B data.
+- **Tone:** Quiet confidence. The kind that doesn't need to shout.
 
 ## Aesthetic Direction
-- **Direction:** Precision Signal
-- **Decoration level:** Intentional — subtle depth, glow accents on active states, gradient borders on hover
-- **Mood:** Bloomberg terminal crossed with Linear. Data-dense but beautiful. Feels like infrastructure, not a form. Every element earns its place. The product is about intelligence extraction — the UI should feel like a precision instrument.
-- **Reference sites:** linear.app, vercel.com, resend.com, posthog.com
+- **Direction:** Gallery Intelligence — the visual language of a fine art dealer, applied to data extraction
+- **Mood:** Editorial dark. Warm, expert, unhurried. Premium without trying.
+- **Reference:** pieterkoopt.nl — dark backgrounds, very large editorial type, generous space, numbered process steps, personal expert tone
+- **Decoration level:** Restrained. Space and typography do all the work. No glassmorphism, no gradient text, no particle effects, no card grids with glow borders.
+- **The one thing to remember:** It should feel like a quiet expert in a dark room, not a SaaS dashboard.
 
 ## Typography
-- **Display/Hero:** Satoshi, weight 700–900 — geometric, modern, confident at large sizes. Letter-spacing -0.02em to -0.03em on headings.
-- **Body/UI:** Geist — clean, neutral, excellent at 12–15px UI density. The system font for all labels, descriptions, copy.
-- **Data/Tables:** Geist Mono — tabular-nums, domain names, metrics, status text. Font-variant-numeric: tabular-nums.
-- **Code:** Geist Mono
-- **Loading:** Google Fonts CDN: `https://fonts.googleapis.com/css2?family=Satoshi:wght@400;500;600;700;800;900&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap`
-- **Scale:**
-  - hero: 72–80px / font-weight 800 / letter-spacing -0.03em
-  - h1: 48px / 800 / -0.03em
-  - h2: 32px / 700 / -0.02em
-  - h3: 20px / 700 / -0.02em
-  - body-lg: 18px / 400 / line-height 1.75
-  - body: 14px / 400 / line-height 1.6
-  - body-sm: 12px / 400
-  - label: 11px / 500
-  - mono-sm: 10–11px Geist Mono
-  - caption: 9–10px Geist Mono / uppercase / letter-spacing 0.10em
+- **Display:** Bodoni Moda — editorial, gallery-catalogue. Italic for headline emphasis.
+  - Source: Google Fonts `Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;1,6..96,400;1,6..96,700`
+- **Body:** Figtree — warm, clean, readable at all sizes
+  - Source: Google Fonts `Figtree:wght@300;400;500;600`
+- **Mono:** Geist Mono — data labels, code, enrichment output
+  - Source: next/font/google
+
+### Scale
+- hero-xl: `clamp(64px, 10vw, 140px)` / Bodoni Moda 400 italic / tracking -0.02em / leading 0.92
+- hero: `clamp(44px, 6.5vw, 96px)` / Bodoni Moda 700 / tracking -0.03em / leading 1.0
+- h2: `clamp(32px, 4.5vw, 64px)` / Bodoni Moda 700 / tracking -0.025em / leading 1.05
+- h3: 20px / Figtree 600 / tracking -0.01em
+- body-lg: 18px / Figtree 300 / line-height 1.85
+- body: 15px / Figtree 400 / line-height 1.7
+- body-sm: 13px / Figtree 400 / line-height 1.6
+- label: 10px / Figtree 500 / tracking 0.14em / uppercase
+- mono: 11–12px / Geist Mono
 
 ## Color
-- **Approach:** Restrained — amber is rare and meaningful. Used on CTAs, active states, and signals only.
-- **BG:** #0B0A0E — warm near-black with a slight purple tint. More premium than gray-950.
-- **Surface:** #111018 — cards, panels, sidebars
-- **Surface Hi:** #18161F — elevated elements, hover states
-- **Surface Hi2:** #1E1B28 — dropdowns, tooltips
-- **Border:** #1F1D28 — standard separators
-- **Border Hi:** #2A2740 — hover borders, focus rings
-- **Text:** #F4F3FF — primary (slightly purple-white, not pure white)
-- **Muted:** #6B6880 — secondary text, placeholders, descriptions
-- **Dim:** #3D3B4E — tertiary text, timestamps, disabled states
-- **Accent (Amber):** #F59E0B — primary CTA, loading states, active borders, signal indicators
-- **Amber Dim:** rgba(245,158,11,0.12) — badge backgrounds, glow rings
-- **Amber Glow:** rgba(245,158,11,0.25) — box-shadow on hover
-- **Indigo:** #818CF8 — "steady" hiring velocity, secondary signals
-- **Green:** #34D399 — success states, "enriched" status
-- **Red:** #F87171 — error states, "failed" status
-- **Yellow:** #FCD34D — "slow" hiring velocity
-- **Dark mode:** This IS the dark mode. The product is dark-only.
+- **BG:** `#0C0B09` — very dark warm black. Like carbon, like a gallery at night.
+- **Surface:** `#141210` — cards, panels
+- **Surface Hi:** `#1C1A16` — elevated, hover
+- **Border:** `#242118` — subtle warm separator
+- **Border Hi:** `#302D26` — hover borders
+- **Text:** `#F0EDE6` — warm off-white. Aged paper. Not pure white.
+- **Muted:** `#7A7168` — secondary copy, descriptions
+- **Dim:** `#3D3A32` — timestamps, disabled, tertiary
+- **Gold:** `#C9A96E` — primary accent. Ore-like. Used on: logo mark, active borders, key signals, CTAs. Rare and meaningful.
+- **Gold Dim:** `rgba(201,169,110,0.10)` — badge/pill backgrounds
+- **Gold Glow:** `rgba(201,169,110,0.15)` — hover box-shadows
+- **Indigo:** `#8B90C8` — Recruiter pack
+- **Sage:** `#7EA88A` — VC pack / success
+- **Red:** `#C87070` — error states
+
+## Packs
+- **SDR Pack** — Gold `#C9A96E` — buying signals, decision-makers, pricing model
+- **Recruiter Pack** — Indigo `#8B90C8` — hiring trajectory, tech stack, eng leaders
+- **VC Pack** — Sage `#7EA88A` — funding, traction, team caliber
 
 ## Spacing
 - **Base unit:** 8px
-- **Scale:** 2(2px) 4(4px) 6(6px) 8(8px) 10(10px) 12(12px) 14(14px) 16(16px) 20(20px) 24(24px) 32(32px) 40(40px) 48(48px) 64(64px) 80(80px)
-- **Density:** Comfortable — not compact. Cards breathe. Content has room.
-- **Card padding:** 13–16px vertical, 16–20px horizontal
-- **Section padding:** 48–80px vertical
+- **Section padding:** 96–128px vertical (generous, gallery-like breathing room)
+- **Content max-width:** 1200px
+- **Card padding:** 28–36px
 
 ## Layout
-- **Approach:** Grid-disciplined
-- **Max content width:** 1200px
-- **Border radius:**
-  - xs: 4px (tech badges, small chips)
-  - sm: 6px (buttons-sm, inner elements)
-  - md: 10px (cards, inputs, buttons)
-  - lg: 16px (panels, app shell, modals)
-  - full: 9999px (pills, tags)
-- **App page:** Sidebar (190px) + main panel flex layout
-- **Landing:** Max 1200px centered, hero 640px max-width
+- **Approach:** Generous. Content breathes. Sections feel like gallery rooms.
+- **Grid:** 12-col, max 1200px centered
+- **Border radius:** xs: 2px · sm: 4px · md: 8px · lg: 12px (smaller than typical — precision instrument)
 
 ## Motion
-- **Approach:** Intentional — animations aid comprehension or signal state
-- **Easing:** enter: ease-out, exit: ease-in, move: ease-in-out
-- **Duration:** micro: 100ms, short: 150ms, medium: 250ms, long: 400ms
-- **Key animations:**
-  - pill-dot: 2s pulse (opacity + scale) — active indicator
-  - scanpulse: 1.5s ease-in-out — loading card left border
-  - ticker scroll: 24s linear infinite — landing hero ticker
-  - card hover: translateY(-2px) + border-color, 150ms
-  - btn-primary hover: translateY(-1px) + box-shadow, 150ms
-  - input focus: box-shadow 0 0 0 3px amber-dim, 150ms
+- **Approach:** Minimal and purposeful. Entries fade and lift. Nothing spins or bounces.
+- **Easing:** ease-out for entries, ease-in for exits
+- **Duration:** 500–900ms for sections, 150ms for micro-interactions
+- **No:** spring physics overload, 3D transforms on marketing content, particle systems
 
 ## Key UI Patterns
-- **Hiring velocity:** 4-bar signal bars (like radio signal strength), not text badges alone
-  - Aggressive: 4 amber bars
-  - Steady: 3 indigo bars
-  - Slow: 2 yellow bars
-  - None: 4 gray bars
-- **Loading card:** amber 3px left border with scanpulse animation + amber "scraping" status text
-- **Expanded card:** grid layout, card-detail-label (mono, uppercase, dim) + card-detail-value (body, muted)
-- **Key signals list:** amber bullet dot (·) + body text
-- **Live ticker:** horizontal scrolling monospace feed on landing hero showing fake live enrichments
-- **Input focus:** amber border + 0 0 0 3px amber-dim ring
-- **CTAs:** amber background, black text, Satoshi 700, md border-radius
-- **Nav logo:** "Prospect" in text color + "IQ" in amber
+- **Logo:** `L·ode` — with a small gold dot between L and ode, or just `Lode` in Bodoni Moda with gold period/dot accent
+- **Section labels:** mono, uppercase, 10px, gold color, `/ label text`
+- **Process steps:** Large numbered (01 02 03) in Bodoni Moda italic, very large
+- **Terminal demo:** Dark card showing live enrichment output with monospace lines
+- **CTAs:** Gold background, dark text, Figtree 600, borderRadius 4px (sharp-ish)
 
 ## Decisions Log
 | Date | Decision | Rationale |
 |------|----------|-----------|
-| 2026-04-15 | Amber gold as primary accent | Unique in B2B intel space — emerald is overused, blue is Salesforce. Amber reads as "signal" and "intelligence." |
-| 2026-04-15 | Warm near-black (#0B0A0E) instead of gray-950 | Slight purple tint adds depth and premium feel without being purple-gradient. |
-| 2026-04-15 | Signal bar velocity indicator | More expressive and scannable than text badges — reads like radio signal strength. |
-| 2026-04-15 | Live ticker on landing hero | Subagent insight: show the product running on fake data, creates "is this real?" moment. |
-| 2026-04-15 | Satoshi + Geist pairing | Satoshi for display personality, Geist for UI clarity — confident and readable at all sizes. |
+| 2026-04-21 | Renamed ProspectIQ → Lode | "Lode" = vein of ore. One syllable, premium, owns the mining/extraction metaphor. Completely distinctive in B2B intel space. |
+| 2026-04-21 | Bodoni Moda editorial serif | Gallery-catalogue feel. Pairs with pieterkoopt.nl reference. Italic headlines create personality without needing color. |
+| 2026-04-21 | Warm dark #0C0B09 vs cool dark | Carbon/wood warmth vs slate coldness. Warmer = more premium, less generic SaaS. |
+| 2026-04-21 | Gold #C9A96E vs amber #F59E0B | Previous amber too saturated, startup-y. New gold reads as ore, precious metal, expertise. |
+| 2026-04-21 | Figtree for body | Warm geometric sans, not on the reflex-reject list, excellent readability, pairs well with Bodoni editorial display. |

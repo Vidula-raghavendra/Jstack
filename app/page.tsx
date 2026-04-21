@@ -12,396 +12,143 @@ import SmoothScroll from "./components/SmoothScroll";
 
 /* ─── DESIGN TOKENS ─── */
 const C = {
-  bg:        "#0B0A0E",
-  surface:   "#111018",
-  surfaceHi: "#18161F",
-  border:    "#1F1D28",
-  borderHi:  "#2A2740",
-  text:      "#F4F3FF",
-  muted:     "#6B6880",
-  dim:       "#3D3B4E",
-  amber:     "#F59E0B",
-  amberDim:  "rgba(245,158,11,0.12)",
-  amberGlow: "rgba(245,158,11,0.20)",
-  indigo:    "#818CF8",
-  indigoDim: "rgba(129,140,248,0.12)",
-  green:     "#34D399",
-  greenDim:  "rgba(52,211,153,0.12)",
+  bg:         "#0C0B09",
+  surface:    "#141210",
+  surfaceHi:  "#1C1A16",
+  border:     "#242118",
+  borderHi:   "#302D26",
+  text:       "#F0EDE6",
+  muted:      "#7A7168",
+  dim:        "#3D3A32",
+  gold:       "#C9A96E",
+  goldDim:    "rgba(201,169,110,0.10)",
+  goldGlow:   "rgba(201,169,110,0.15)",
+  indigo:     "#8B90C8",
+  indigoDim:  "rgba(139,144,200,0.10)",
+  sage:       "#7EA88A",
+  sageDim:    "rgba(126,168,138,0.10)",
 };
 
-const SAT = "'Satoshi', system-ui, sans-serif";
-const MONO = "var(--font-geist-mono), 'Geist Mono', monospace";
-const E = [0.16, 1, 0.3, 1] as [number, number, number, number];
+const SERIF = "'Bodoni Moda', Georgia, serif";
+const SANS  = "'Figtree', system-ui, sans-serif";
+const MONO  = "var(--font-geist-mono), 'Geist Mono', monospace";
+const E     = [0.22, 1, 0.36, 1] as [number, number, number, number];
 
 /* ─── DATA ─── */
 const PACKS = [
   {
-    id: "sdr",
+    id: "sdr", n: "01",
     label: "SDR Pack",
-    badge: "Sales",
-    color: C.amber,
-    dim: C.amberDim,
+    color: C.gold, dim: C.goldDim,
     headline: "Outbound signals that close deals.",
-    sub: "Buying intent, decision-makers with LinkedIn, pricing model, recent launches, named customer logos.",
-    signals: [
-      "Pricing model: sales-led vs self-serve",
-      "Decision-makers + public LinkedIn",
-      "Named customer logos from case studies",
-      "Recent product launches & integrations",
-    ],
+    body: "Buying intent, decision-makers with public LinkedIn, pricing model, recent launches, named customer logos — everything a rep needs before the cold call.",
+    signals: ["Pricing model: sales-led vs self-serve", "Decision-makers + public LinkedIn", "Named customer logos from case studies", "Recent product launches & integrations"],
   },
   {
-    id: "recruiter",
+    id: "recruiter", n: "02",
     label: "Recruiter Pack",
-    badge: "Talent",
-    color: C.indigo,
-    dim: C.indigoDim,
-    headline: "Hiring intel before the cold call.",
-    sub: "Every open role, languages from job posts, engineering leaders, team growth velocity.",
-    signals: [
-      "All open roles with team & location",
-      "Tech stack inferred from job posts",
-      "Velocity: aggressive / steady / slow",
-      "Engineering leaders & hiring managers",
-    ],
+    color: C.indigo, dim: C.indigoDim,
+    headline: "Hiring intel before the intro call.",
+    body: "Every open role, tech stack inferred from job posts, engineering leaders, and team growth velocity — so you know the shape of the org before you reach out.",
+    signals: ["All open roles with team & location", "Tech stack from job post language", "Velocity: aggressive / steady / slow", "Engineering leaders & hiring managers"],
   },
   {
-    id: "vc",
+    id: "vc", n: "03",
     label: "VC Pack",
-    badge: "Invest",
-    color: C.green,
-    dim: C.greenDim,
+    color: C.sage, dim: C.sageDim,
     headline: "Investment-grade signals, fast.",
-    sub: "Funding stage, named investors, ARR signals, founder backgrounds, expansion moves.",
-    signals: [
-      "Funding stage + named investors",
-      "Traction: logos, ARR signals, growth",
-      "Founder backgrounds & prior exits",
-      "Market expansion & partnership moves",
-    ],
+    body: "Funding stage, named investors, ARR signals, founder backgrounds, and market expansion moves — the provenance of any company, extracted in 60 seconds.",
+    signals: ["Funding stage + named investors", "Traction: logos, ARR signals, growth", "Founder backgrounds & prior exits", "Market expansion & partnership moves"],
   },
 ];
 
-const FEATURES = [
-  { n: "01", title: "Stealth crawl", body: "Hyperbrowser's anti-detection sessions bypass bot protection. No CAPTCHAs, no blocks — consistent extraction across any site." },
-  { n: "02", title: "Pack-aware extraction", body: "One crawl, three lenses. The pack reshapes prompt, URL fan-out, and schema — role-specific intelligence without redundant scraping." },
-  { n: "03", title: "MCP server included", body: "JSON-RPC 2.0 at /api/mcp. Wire ProspectIQ into Cursor or Claude Desktop and call enrich_companies inline — no context switch." },
-  { n: "04", title: "Pack-shaped CSV export", body: "Export with pack-specific columns. SDR gets people + buying signals. Recruiter gets roles + stack. VC gets funding + founders." },
+const STEPS = [
+  { n: "01", title: "Paste domains.", body: "Enter one domain per line — up to 10 per run. No signup required. No setup." },
+  { n: "02", title: "Pick your pack.", body: "SDR, Recruiter, or VC. The pack reshapes the entire extraction — signals, people, schema, CSV." },
+  { n: "03", title: "Signals stream back.", body: "Watch intelligence arrive in real time from a stealth Hyperbrowser session. Export or route to Claude via MCP." },
 ];
 
 const TICKER_ITEMS = [
-  "stripe.com · SDR · 6 signals · 8 people · 2m ago",
-  "linear.app · Recruiter · 12 open roles · 44s",
-  "vercel.com · VC · Series C · 3 founders · 1m ago",
-  "notion.so · SDR · sales-led · 14 decision-makers · 3m",
-  "figma.com · VC · YC S20 · $800M ARR · 2m ago",
-  "resend.com · SDR · 100+ logos · 33 investors · 58s",
-  "supabase.com · Recruiter · aggressive · Rust + Go · 1m",
-  "planetscale.com · VC · Series C · Tiger Global · 2m",
+  "stripe.com — SDR — 6 signals — 8 people",
+  "linear.app — Recruiter — 12 open roles — 44s",
+  "vercel.com — VC — Series C — 3 founders",
+  "notion.so — SDR — sales-led — 14 names",
+  "figma.com — VC — YC S20 — $800M ARR",
+  "resend.com — SDR — 100+ logos — 33 investors",
+  "supabase.com — Recruiter — aggressive — Rust + Go",
 ];
 
-type DemoLine = { type: "cmd" | "status" | "key" | "val" | "sig" | "gap" | "done"; text: string };
+type Line = { t: "cmd"|"status"|"key"|"val"|"sig"|"gap"|"done"; s: string };
 
-const DEMOS: { domain: string; pack: string; color: string; lines: DemoLine[] }[] = [
+const DEMOS: { domain: string; pack: string; color: string; lines: Line[] }[] = [
   {
-    domain: "stripe.com", pack: "SDR", color: C.amber,
+    domain: "stripe.com", pack: "SDR", color: C.gold,
     lines: [
-      { type: "cmd",    text: "$ enrich stripe.com --pack sdr" },
-      { type: "status", text: "scraping 10 pages via stealth session..." },
-      { type: "gap",    text: "" },
-      { type: "key",    text: "COMPANY" },
-      { type: "val",    text: "Stripe — payments infrastructure for the internet" },
-      { type: "key",    text: "PRICING" },
-      { type: "val",    text: "sales-led · enterprise contracts · self-serve SMB" },
-      { type: "gap",    text: "" },
-      { type: "key",    text: "BUYING SIGNALS" },
-      { type: "sig",    text: "· 'Talk to sales' on all enterprise tiers" },
-      { type: "sig",    text: "· Launched 40+ markets in Q3 → expansion signal" },
-      { type: "sig",    text: "· API-first → dev champion at every account" },
-      { type: "gap",    text: "" },
-      { type: "key",    text: "PEOPLE" },
-      { type: "val",    text: "8 found · Patrick Collison, Eileen Donahoe +6" },
-      { type: "done",   text: "✓  enriched in 58s" },
+      { t:"cmd",    s:"$ lode enrich stripe.com --pack sdr" },
+      { t:"status", s:"opening stealth session..." },
+      { t:"gap",    s:"" },
+      { t:"key",    s:"COMPANY" },
+      { t:"val",    s:"Stripe — payments infrastructure for the internet" },
+      { t:"key",    s:"PRICING MODEL" },
+      { t:"val",    s:"sales-led · enterprise contracts · self-serve SMB" },
+      { t:"gap",    s:"" },
+      { t:"key",    s:"BUYING SIGNALS" },
+      { t:"sig",    s:"· 'Talk to sales' on all enterprise tiers" },
+      { t:"sig",    s:"· Launched 40+ new markets Q3 → expansion signal" },
+      { t:"sig",    s:"· API-first → dev champion at every account" },
+      { t:"gap",    s:"" },
+      { t:"key",    s:"PEOPLE" },
+      { t:"val",    s:"8 found — Patrick Collison, Eileen Donahoe +6" },
+      { t:"done",   s:"✓  extracted in 58s" },
     ],
   },
   {
     domain: "linear.app", pack: "Recruiter", color: C.indigo,
     lines: [
-      { type: "cmd",    text: "$ enrich linear.app --pack recruiter" },
-      { type: "status", text: "scraping 8 pages via stealth session..." },
-      { type: "gap",    text: "" },
-      { type: "key",    text: "HIRING VELOCITY" },
-      { type: "val",    text: "aggressive · 12 open roles" },
-      { type: "key",    text: "TECH STACK" },
-      { type: "val",    text: "TypeScript, Rust, PostgreSQL, Kubernetes" },
-      { type: "gap",    text: "" },
-      { type: "key",    text: "HIRING SIGNALS" },
-      { type: "sig",    text: "· 8 senior eng roles → rapid team expansion" },
-      { type: "sig",    text: "· Hiring Rust infra → platform rewrite in progress" },
-      { type: "sig",    text: "· Berlin + SF both actively hiring simultaneously" },
-      { type: "gap",    text: "" },
-      { type: "key",    text: "ENG LEADERS" },
-      { type: "val",    text: "4 found · Tuomas Artman (CTO), Nan Yu +2" },
-      { type: "done",   text: "✓  enriched in 44s" },
+      { t:"cmd",    s:"$ lode enrich linear.app --pack recruiter" },
+      { t:"status", s:"opening stealth session..." },
+      { t:"gap",    s:"" },
+      { t:"key",    s:"HIRING VELOCITY" },
+      { t:"val",    s:"aggressive · 12 open roles" },
+      { t:"key",    s:"TECH STACK" },
+      { t:"val",    s:"TypeScript, Rust, PostgreSQL, Kubernetes" },
+      { t:"gap",    s:"" },
+      { t:"key",    s:"HIRING SIGNALS" },
+      { t:"sig",    s:"· 8 senior eng roles → rapid team expansion" },
+      { t:"sig",    s:"· Hiring Rust infra → platform rewrite in motion" },
+      { t:"sig",    s:"· Berlin + SF both actively hiring simultaneously" },
+      { t:"gap",    s:"" },
+      { t:"key",    s:"ENG LEADERS" },
+      { t:"val",    s:"4 found — Tuomas Artman (CTO), Nan Yu +2" },
+      { t:"done",   s:"✓  extracted in 44s" },
     ],
   },
   {
-    domain: "vercel.com", pack: "VC", color: C.green,
+    domain: "vercel.com", pack: "VC", color: C.sage,
     lines: [
-      { type: "cmd",    text: "$ enrich vercel.com --pack vc" },
-      { type: "status", text: "scraping 9 pages via stealth session..." },
-      { type: "gap",    text: "" },
-      { type: "key",    text: "FUNDING" },
-      { type: "val",    text: "Series C · $150M · Tiger Global, Bedrock, GV" },
-      { type: "key",    text: "TRACTION" },
-      { type: "val",    text: "10,000+ paying teams · 10× YoY revenue growth" },
-      { type: "gap",    text: "" },
-      { type: "key",    text: "INVESTMENT SIGNALS" },
-      { type: "sig",    text: "· Ex-Google/Meta founders · strong angel syndicate" },
-      { type: "sig",    text: "· ARR $100M+ implied by Series C valuation terms" },
-      { type: "sig",    text: "· Shopify + Loom partnerships → enterprise push" },
-      { type: "gap",    text: "" },
-      { type: "key",    text: "FOUNDERS" },
-      { type: "val",    text: "3 found · Guillermo Rauch (CEO), Matheus Fernandes" },
-      { type: "done",   text: "✓  enriched in 62s" },
+      { t:"cmd",    s:"$ lode enrich vercel.com --pack vc" },
+      { t:"status", s:"opening stealth session..." },
+      { t:"gap",    s:"" },
+      { t:"key",    s:"FUNDING" },
+      { t:"val",    s:"Series C · $150M · Tiger Global, Bedrock, GV" },
+      { t:"key",    s:"TRACTION" },
+      { t:"val",    s:"10,000+ paying teams · 10× YoY revenue growth" },
+      { t:"gap",    s:"" },
+      { t:"key",    s:"INVESTMENT SIGNALS" },
+      { t:"sig",    s:"· Ex-Google/Meta founders · strong angel syndicate" },
+      { t:"sig",    s:"· ARR $100M+ implied by Series C valuation" },
+      { t:"sig",    s:"· Shopify + Loom partnerships → enterprise push" },
+      { t:"gap",    s:"" },
+      { t:"key",    s:"FOUNDERS" },
+      { t:"val",    s:"3 found — Guillermo Rauch (CEO), Matheus Fernandes" },
+      { t:"done",   s:"✓  extracted in 62s" },
     ],
   },
 ];
 
-/* ─── COMPONENTS ─── */
-
-function Grain() {
-  return (
-    <div className="fixed inset-0 z-[150] pointer-events-none" style={{ opacity: 0.022 }}>
-      <svg width="100%" height="100%">
-        <filter id="grain">
-          <feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="4" stitchTiles="stitch" />
-          <feColorMatrix type="saturate" values="0" />
-        </filter>
-        <rect width="100%" height="100%" filter="url(#grain)" />
-      </svg>
-    </div>
-  );
-}
-
-function Cursor() {
-  const mx = useMotionValue(-200); const my = useMotionValue(-200);
-  const sx = useSpring(mx, { stiffness: 500, damping: 45 });
-  const sy = useSpring(my, { stiffness: 500, damping: 45 });
-  const lx = useSpring(mx, { stiffness: 80, damping: 22 });
-  const ly = useSpring(my, { stiffness: 80, damping: 22 });
-  const [big, setBig] = useState(false);
-  useEffect(() => {
-    const move = (e: MouseEvent) => { mx.set(e.clientX); my.set(e.clientY); };
-    const over = (e: MouseEvent) => { if ((e.target as Element).closest("a,button")) setBig(true); };
-    const out  = (e: MouseEvent) => { if ((e.target as Element).closest("a,button")) setBig(false); };
-    window.addEventListener("mousemove", move);
-    window.addEventListener("mouseover", over);
-    window.addEventListener("mouseout", out);
-    return () => {
-      window.removeEventListener("mousemove", move);
-      window.removeEventListener("mouseover", over);
-      window.removeEventListener("mouseout", out);
-    };
-  }, [mx, my]);
-  return (
-    <>
-      <motion.div className="fixed top-0 left-0 pointer-events-none z-[500] rounded-full"
-        style={{ x: sx, y: sy, translateX: "-50%", translateY: "-50%", background: C.amber }}
-        animate={{ width: big ? 40 : 6, height: big ? 40 : 6, opacity: big ? 0.2 : 1 }}
-        transition={{ duration: 0.15, ease: E }} />
-      <motion.div className="fixed top-0 left-0 pointer-events-none z-[499] rounded-full"
-        style={{ x: lx, y: ly, translateX: "-50%", translateY: "-50%", width: 28, height: 28, border: `1px solid ${C.dim}` }} />
-    </>
-  );
-}
-
-function CopyButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <button
-      onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-      style={{ fontFamily: MONO, fontSize: 10, color: copied ? C.amber : C.muted, border: `1px solid ${copied ? C.amber : C.border}`, borderRadius: 6, padding: "5px 12px", background: copied ? C.amberDim : "transparent", cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap", letterSpacing: "0.06em" }}>
-      {copied ? "COPIED ✓" : "COPY CONFIG"}
-    </button>
-  );
-}
-
-function EnrichmentDemo() {
-  const [demoIdx, setDemoIdx] = useState(0);
-  const [lineCount, setLineCount] = useState(0);
-  const demo = DEMOS[demoIdx];
-
-  useEffect(() => {
-    let t: ReturnType<typeof setTimeout>;
-    if (lineCount < demo.lines.length) {
-      const delay = lineCount === 0 ? 500 : demo.lines[lineCount - 1]?.type === "gap" ? 80 : 180;
-      t = setTimeout(() => setLineCount(c => c + 1), delay);
-    } else {
-      t = setTimeout(() => { setDemoIdx(d => (d + 1) % DEMOS.length); setLineCount(0); }, 3200);
-    }
-    return () => clearTimeout(t);
-  }, [lineCount, demo.lines.length]);
-
-  const lineColor = (line: DemoLine, packColor: string) => {
-    if (line.type === "cmd")    return C.muted;
-    if (line.type === "status") return C.dim;
-    if (line.type === "key")    return C.dim;
-    if (line.type === "val")    return C.text;
-    if (line.type === "sig")    return packColor;
-    if (line.type === "done")   return C.green;
-    return "transparent";
-  };
-
-  return (
-    <div className="relative rounded-xl overflow-hidden"
-      style={{ background: C.surface, border: `1px solid ${C.border}`, boxShadow: `0 0 60px -10px ${demo.color}30` }}>
-      {/* Terminal header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: C.border }}>
-        <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#FF5F56" }} />
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#FFBD2E" }} />
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#27C93F" }} />
-        </div>
-        <div className="flex items-center gap-2">
-          <motion.div className="w-1.5 h-1.5 rounded-full" style={{ background: C.green }}
-            animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.8, repeat: Infinity }} />
-          <span style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.1em" }}>
-            LIVE · ProspectIQ
-          </span>
-        </div>
-        <AnimatePresence mode="wait">
-          <motion.span key={demo.pack}
-            initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
-            style={{ fontFamily: MONO, fontSize: 10, color: demo.color, background: `${demo.color}18`, border: `1px solid ${demo.color}40`, borderRadius: 4, padding: "2px 8px", letterSpacing: "0.1em" }}>
-            {demo.pack.toUpperCase()}
-          </motion.span>
-        </AnimatePresence>
-      </div>
-
-      {/* Terminal body */}
-      <div className="p-4 overflow-hidden" style={{ minHeight: 320, fontFamily: MONO, fontSize: 12, lineHeight: 1.65 }}>
-        <AnimatePresence mode="wait">
-          <motion.div key={demoIdx}
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}>
-            {demo.lines.slice(0, lineCount).map((line, i) => (
-              <motion.div key={i}
-                initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.18, ease: "easeOut" }}
-                style={{
-                  color: lineColor(line, demo.color),
-                  fontSize: line.type === "key" ? 9 : 12,
-                  letterSpacing: line.type === "key" ? "0.12em" : "0",
-                  marginTop: line.type === "gap" ? 0 : line.type === "key" ? 10 : 0,
-                  height: line.type === "gap" ? 6 : "auto",
-                  fontWeight: line.type === "done" ? 600 : 400,
-                  paddingLeft: line.type === "sig" ? 4 : 0,
-                }}>
-                {line.type !== "gap" && line.text}
-                {i === lineCount - 1 && lineCount < demo.lines.length && line.type !== "gap" && (
-                  <motion.span style={{ color: C.amber }}
-                    animate={{ opacity: [1, 0] }} transition={{ duration: 0.6, repeat: Infinity }}>▋</motion.span>
-                )}
-              </motion.div>
-            ))}
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      {/* Status bar */}
-      <div className="px-4 py-2.5 border-t flex items-center justify-between" style={{ borderColor: C.border }}>
-        <AnimatePresence mode="wait">
-          <motion.span key={demo.domain}
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.06em" }}>
-            {demo.domain}
-          </motion.span>
-        </AnimatePresence>
-        {lineCount > 0 && lineCount < demo.lines.length && (
-          <motion.div className="flex items-center gap-1.5"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <motion.div className="w-1 h-1 rounded-full" style={{ background: C.amber }}
-              animate={{ scale: [1, 1.8, 1], opacity: [1, 0.4, 1] }}
-              transition={{ duration: 0.8, repeat: Infinity }} />
-            <span style={{ fontFamily: MONO, fontSize: 10, color: C.amber, letterSpacing: "0.06em" }}>SCRAPING</span>
-          </motion.div>
-        )}
-        {lineCount >= demo.lines.length && (
-          <span style={{ fontFamily: MONO, fontSize: 10, color: C.green, letterSpacing: "0.06em" }}>ENRICHED</span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function PackCard({ pack, index }: { pack: typeof PACKS[0]; index: number }) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6, delay: index * 0.1, ease: E }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        background: hovered ? C.surfaceHi : C.surface,
-        border: `1px solid ${hovered ? pack.color + "60" : C.border}`,
-        borderRadius: 12,
-        padding: "28px 28px 24px",
-        transition: "all 0.2s ease",
-        boxShadow: hovered ? `0 0 40px -8px ${pack.color}25` : "none",
-      }}>
-      <div className="flex items-center justify-between mb-5">
-        <span style={{ fontFamily: MONO, fontSize: 9, color: pack.color, background: pack.dim, border: `1px solid ${pack.color}40`, borderRadius: 4, padding: "3px 8px", letterSpacing: "0.12em" }}>
-          {pack.badge.toUpperCase()}
-        </span>
-        <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.08em" }}>
-          {pack.id === "sdr" ? "/ 01" : pack.id === "recruiter" ? "/ 02" : "/ 03"}
-        </span>
-      </div>
-
-      <h3 style={{ fontFamily: SAT, fontWeight: 700, fontSize: 18, color: C.text, letterSpacing: "-0.02em", marginBottom: 8, lineHeight: 1.3 }}>
-        {pack.label}
-      </h3>
-      <p style={{ fontSize: 13, color: C.muted, lineHeight: 1.7, marginBottom: 20 }}>
-        {pack.sub}
-      </p>
-
-      <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 16, display: "flex", flexDirection: "column", gap: 7 }}>
-        {pack.signals.map((sig, i) => (
-          <div key={i} className="flex items-start gap-2.5">
-            <span style={{ color: pack.color, marginTop: 3, flexShrink: 0, fontSize: 8 }}>◆</span>
-            <span style={{ fontFamily: MONO, fontSize: 11, color: C.muted, lineHeight: 1.55, letterSpacing: "0.02em" }}>{sig}</span>
-          </div>
-        ))}
-      </div>
-    </motion.div>
-  );
-}
-
-function FeatureRow({ n, title, body, index }: typeof FEATURES[0] & { index: number }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay: index * 0.08, ease: E }}
-      className="grid grid-cols-[56px_1fr] gap-6 py-6 border-b"
-      style={{ borderColor: C.border }}>
-      <span style={{ fontFamily: MONO, fontSize: 10, color: C.dim, letterSpacing: "0.1em", paddingTop: 3 }}>{n}</span>
-      <div>
-        <h4 style={{ fontFamily: SAT, fontWeight: 700, fontSize: 16, color: C.text, letterSpacing: "-0.01em", marginBottom: 6 }}>{title}</h4>
-        <p style={{ fontSize: 14, color: C.muted, lineHeight: 1.7, maxWidth: 560 }}>{body}</p>
-      </div>
-    </motion.div>
-  );
-}
-
 const MCP_CONFIG = `{
   "mcpServers": {
-    "prospectiq": {
+    "lode": {
       "command": "npx",
       "args": [
         "mcp-remote",
@@ -411,8 +158,159 @@ const MCP_CONFIG = `{
   }
 }`;
 
+/* ─── COMPONENTS ─── */
+
+function Grain() {
+  return (
+    <div className="fixed inset-0 z-[150] pointer-events-none" style={{ opacity: 0.018 }}>
+      <svg width="100%" height="100%">
+        <filter id="g">
+          <feTurbulence type="fractalNoise" baseFrequency="0.70" numOctaves="4" stitchTiles="stitch" />
+          <feColorMatrix type="saturate" values="0" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#g)" />
+      </svg>
+    </div>
+  );
+}
+
+function Cursor() {
+  const mx = useMotionValue(-200); const my = useMotionValue(-200);
+  const sx = useSpring(mx, { stiffness: 500, damping: 45 });
+  const sy = useSpring(my, { stiffness: 500, damping: 45 });
+  const lx = useSpring(mx, { stiffness: 70, damping: 20 });
+  const ly = useSpring(my, { stiffness: 70, damping: 20 });
+  const [big, setBig] = useState(false);
+  useEffect(() => {
+    const m = (e: MouseEvent) => { mx.set(e.clientX); my.set(e.clientY); };
+    const i = (e: MouseEvent) => { if ((e.target as Element).closest("a,button")) setBig(true); };
+    const o = (e: MouseEvent) => { if ((e.target as Element).closest("a,button")) setBig(false); };
+    window.addEventListener("mousemove", m);
+    window.addEventListener("mouseover", i);
+    window.addEventListener("mouseout", o);
+    return () => { window.removeEventListener("mousemove", m); window.removeEventListener("mouseover", i); window.removeEventListener("mouseout", o); };
+  }, [mx, my]);
+  return (
+    <>
+      <motion.div className="fixed top-0 left-0 pointer-events-none z-[500] rounded-full"
+        style={{ x: sx, y: sy, translateX: "-50%", translateY: "-50%", background: C.gold }}
+        animate={{ width: big ? 36 : 5, height: big ? 36 : 5, opacity: big ? 0.18 : 0.9 }}
+        transition={{ duration: 0.15 }} />
+      <motion.div className="fixed top-0 left-0 pointer-events-none z-[499] rounded-full"
+        style={{ x: lx, y: ly, translateX: "-50%", translateY: "-50%", width: 24, height: 24, border: `1px solid ${C.dim}` }} />
+    </>
+  );
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+      style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.1em", color: copied ? C.gold : C.muted, border: `1px solid ${copied ? C.gold : C.border}`, borderRadius: 3, padding: "4px 10px", background: copied ? C.goldDim : "transparent", cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap" }}>
+      {copied ? "COPIED" : "COPY"}
+    </button>
+  );
+}
+
+function Terminal() {
+  const [idx, setIdx] = useState(0);
+  const [count, setCount] = useState(0);
+  const demo = DEMOS[idx];
+
+  useEffect(() => {
+    let t: ReturnType<typeof setTimeout>;
+    if (count < demo.lines.length) {
+      const d = count === 0 ? 600 : demo.lines[count - 1]?.t === "gap" ? 60 : 160;
+      t = setTimeout(() => setCount(c => c + 1), d);
+    } else {
+      t = setTimeout(() => { setIdx(i => (i + 1) % DEMOS.length); setCount(0); }, 3500);
+    }
+    return () => clearTimeout(t);
+  }, [count, demo.lines.length]);
+
+  const lineColor = (l: Line) => {
+    if (l.t === "cmd")    return C.dim;
+    if (l.t === "status") return C.dim;
+    if (l.t === "key")    return C.dim;
+    if (l.t === "val")    return C.text;
+    if (l.t === "sig")    return demo.color;
+    if (l.t === "done")   return C.sage;
+    return "transparent";
+  };
+
+  return (
+    <div className="relative rounded-lg overflow-hidden"
+      style={{ background: C.surface, border: `1px solid ${C.border}`, boxShadow: `0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px ${C.border}` }}>
+      {/* header */}
+      <div className="flex items-center justify-between px-5 py-3.5 border-b" style={{ borderColor: C.border }}>
+        <div className="flex gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#3A3530" }} />
+          <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#3A3530" }} />
+          <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#3A3530" }} />
+        </div>
+        <div className="flex items-center gap-2">
+          <motion.div className="w-1.5 h-1.5 rounded-full" style={{ background: C.sage }}
+            animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 2, repeat: Infinity }} />
+          <span style={{ fontFamily: MONO, fontSize: 9, color: C.muted, letterSpacing: "0.12em" }}>LODE · LIVE</span>
+        </div>
+        <AnimatePresence mode="wait">
+          <motion.span key={demo.pack}
+            initial={{ opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -3 }}
+            style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.1em", color: demo.color, background: `${demo.color}18`, border: `1px solid ${demo.color}35`, borderRadius: 2, padding: "2px 8px" }}>
+            {demo.pack.toUpperCase()}
+          </motion.span>
+        </AnimatePresence>
+      </div>
+
+      {/* body */}
+      <div style={{ minHeight: 300, padding: "20px 24px", fontFamily: MONO, fontSize: 11.5, lineHeight: 1.7 }}>
+        <AnimatePresence mode="wait">
+          <motion.div key={idx} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
+            {demo.lines.slice(0, count).map((line, i) => (
+              <motion.div key={i}
+                initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.14, ease: "easeOut" }}
+                style={{
+                  color: lineColor(line),
+                  fontSize: line.t === "key" ? 9 : 11.5,
+                  letterSpacing: line.t === "key" ? "0.14em" : "0.01em",
+                  marginTop: line.t === "key" ? 10 : 0,
+                  height: line.t === "gap" ? 5 : "auto",
+                  fontWeight: line.t === "done" ? 500 : 400,
+                }}>
+                {line.t !== "gap" && line.s}
+                {i === count - 1 && count < demo.lines.length && line.t !== "gap" && (
+                  <motion.span style={{ color: C.gold }} animate={{ opacity: [1, 0] }} transition={{ duration: 0.5, repeat: Infinity }}>▋</motion.span>
+                )}
+              </motion.div>
+            ))}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* footer */}
+      <div className="px-5 py-3 border-t flex items-center justify-between" style={{ borderColor: C.border }}>
+        <AnimatePresence mode="wait">
+          <motion.span key={demo.domain} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.08em" }}>
+            {demo.domain}
+          </motion.span>
+        </AnimatePresence>
+        {count > 0 && count < demo.lines.length ? (
+          <motion.div className="flex items-center gap-1.5" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <motion.span className="w-1 h-1 rounded-full" style={{ background: C.gold }} animate={{ scale: [1, 1.8, 1] }} transition={{ duration: 0.8, repeat: Infinity }} />
+            <span style={{ fontFamily: MONO, fontSize: 9, color: C.gold, letterSpacing: "0.1em" }}>EXTRACTING</span>
+          </motion.div>
+        ) : count >= demo.lines.length ? (
+          <span style={{ fontFamily: MONO, fontSize: 9, color: C.sage, letterSpacing: "0.1em" }}>COMPLETE</span>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 /* ─── PAGE ─── */
-export default function LandingPage() {
+export default function Page() {
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30 });
   const [scrolled, setScrolled] = useState(false);
@@ -421,48 +319,45 @@ export default function LandingPage() {
 
   useEffect(() => {
     const unsub = scrollYProgress.on("change", () => {
-      const cur = window.scrollY;
-      setScrolled(cur > 50);
-      if (cur < 80) { setNavVisible(true); lastY.current = cur; return; }
-      if (cur > lastY.current + 10) setNavVisible(false);
-      else if (cur < lastY.current - 10) setNavVisible(true);
-      lastY.current = cur;
+      const y = window.scrollY;
+      setScrolled(y > 40);
+      if (y < 60) { setNavVisible(true); lastY.current = y; return; }
+      setNavVisible(y < lastY.current + 12);
+      lastY.current = y;
     });
     return unsub;
   }, [scrollYProgress]);
 
   return (
     <SmoothScroll>
-      <div style={{ fontFamily: "var(--font-geist-sans)", background: C.bg, color: C.text, cursor: "none" }}
-        className="min-h-screen overflow-x-hidden">
+      <div style={{ fontFamily: SANS, background: C.bg, color: C.text, cursor: "none" }} className="min-h-screen overflow-x-hidden">
         <Cursor />
         <Grain />
 
-        {/* scroll progress */}
-        <motion.div className="fixed top-0 left-0 right-0 h-[2px] origin-left z-[60]"
-          style={{ scaleX, background: C.amber }} />
+        {/* progress bar */}
+        <motion.div className="fixed top-0 left-0 right-0 h-px origin-left z-[60]"
+          style={{ scaleX, background: C.gold }} />
 
         {/* ── NAV ── */}
         <motion.nav
-          className="fixed top-0 left-0 right-0 z-50 px-6 lg:px-12 py-4 flex items-center justify-between"
+          className="fixed top-0 left-0 right-0 z-50 px-8 lg:px-14 py-5 flex items-center justify-between"
           animate={{
-            y: navVisible ? 0 : -72,
-            background: scrolled ? "rgba(11,10,14,0.88)" : "rgba(11,10,14,0)",
-            backdropFilter: scrolled ? "blur(20px)" : "blur(0px)",
+            y: navVisible ? 0 : -70,
+            background: scrolled ? "rgba(12,11,9,0.90)" : "rgba(12,11,9,0)",
+            backdropFilter: scrolled ? "blur(24px)" : "blur(0px)",
           }}
-          transition={{ duration: 0.35, ease: E }}>
+          transition={{ duration: 0.3, ease: E }}>
 
-          <motion.a href="/" initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2, ease: E }}
-            style={{ fontFamily: SAT, fontWeight: 800, fontSize: 18, color: C.text, letterSpacing: "-0.03em", textDecoration: "none" }}>
-            Prospect<span style={{ color: C.amber }}>IQ</span>
+          <motion.a href="/" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
+            style={{ fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, fontSize: 22, color: C.text, textDecoration: "none", display: "flex", alignItems: "center", gap: 2, letterSpacing: "-0.01em" }}>
+            Lode<span style={{ color: C.gold, fontSize: 10, lineHeight: 1, marginBottom: -6 }}>·</span>
           </motion.a>
 
-          <motion.div className="hidden md:flex items-center gap-6"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
-            {["Packs", "MCP", "Features"].map((item) => (
+          <motion.div className="hidden md:flex items-center gap-8"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
+            {["Packs", "Process", "MCP"].map(item => (
               <a key={item} href={`#${item.toLowerCase()}`}
-                style={{ fontFamily: "var(--font-geist-sans)", fontSize: 13, color: C.muted, textDecoration: "none", letterSpacing: "0.01em", transition: "color 0.15s" }}
+                style={{ fontFamily: SANS, fontSize: 13, fontWeight: 400, color: C.muted, textDecoration: "none", letterSpacing: "0.01em", transition: "color 0.15s" }}
                 onMouseEnter={e => (e.currentTarget.style.color = C.text)}
                 onMouseLeave={e => (e.currentTarget.style.color = C.muted)}>
                 {item}
@@ -471,195 +366,205 @@ export default function LandingPage() {
           </motion.div>
 
           <motion.a href="/app"
-            initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.3, ease: E }}
-            style={{ fontFamily: SAT, fontWeight: 700, fontSize: 13, color: "#000", background: C.amber, padding: "8px 20px", borderRadius: 8, textDecoration: "none", letterSpacing: "-0.01em", transition: "all 0.15s", display: "inline-block" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; (e.currentTarget as HTMLElement).style.boxShadow = `0 8px 24px ${C.amberGlow}`; }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
+            style={{ fontFamily: SANS, fontWeight: 600, fontSize: 13, color: C.bg, background: C.gold, padding: "9px 22px", borderRadius: 4, textDecoration: "none", letterSpacing: "0.01em", display: "inline-block", transition: "all 0.15s" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; (e.currentTarget as HTMLElement).style.boxShadow = `0 8px 28px ${C.goldGlow}`; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ""; (e.currentTarget as HTMLElement).style.boxShadow = ""; }}>
-            Open app →
+            Open app
           </motion.a>
         </motion.nav>
 
         {/* ── HERO ── */}
-        <section className="relative min-h-screen flex items-center overflow-hidden pt-20">
-          {/* bg texture */}
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute inset-0 opacity-[0.012]"
-              style={{ backgroundImage: `linear-gradient(${C.borderHi} 1px, transparent 1px), linear-gradient(90deg, ${C.borderHi} 1px, transparent 1px)`, backgroundSize: "72px 72px" }} />
-            <div className="absolute top-0 left-0 w-[800px] h-[800px] pointer-events-none"
-              style={{ background: `radial-gradient(ellipse at 20% 30%, ${C.amberDim} 0%, transparent 55%)`, opacity: 0.6 }} />
-          </div>
+        <section className="relative min-h-screen flex items-center overflow-hidden">
+          {/* very subtle warm glow, top-left */}
+          <div className="absolute top-0 left-0 pointer-events-none"
+            style={{ width: 900, height: 900, background: `radial-gradient(ellipse at 15% 25%, ${C.goldDim} 0%, transparent 60%)`, opacity: 0.5 }} />
 
-          <div className="relative z-10 w-full max-w-[1280px] mx-auto px-6 lg:px-12 py-16 grid grid-cols-1 lg:grid-cols-[1fr_1.05fr] gap-12 lg:gap-16 items-center">
-            {/* Left */}
+          <div className="relative z-10 w-full max-w-[1200px] mx-auto px-8 lg:px-14 pt-28 pb-16 grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-10 lg:gap-20 items-center">
+            {/* left */}
             <div>
               <motion.div
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4, ease: E }}
-                className="inline-flex items-center gap-2 mb-8 px-3 py-1.5 rounded-full"
-                style={{ background: C.surface, border: `1px solid ${C.border}` }}>
-                <motion.span className="w-1.5 h-1.5 rounded-full" style={{ background: C.green }}
-                  animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 2, repeat: Infinity }} />
-                <span style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.1em" }}>
-                  LIVE · MCP-NATIVE · HYPERBROWSER
-                </span>
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="flex items-center gap-2 mb-10">
+                <motion.span className="w-1.5 h-1.5 rounded-full" style={{ background: C.sage }}
+                  animate={{ scale: [1, 1.6, 1], opacity: [1, 0.5, 1] }} transition={{ duration: 2.4, repeat: Infinity }} />
+                <span style={{ fontFamily: MONO, fontSize: 9, color: C.muted, letterSpacing: "0.16em" }}>LIVE · MCP-NATIVE · HYPERBROWSER</span>
               </motion.div>
 
-              <div className="overflow-hidden mb-1">
+              <div className="overflow-hidden">
                 <motion.h1
-                  initial={{ y: "105%", opacity: 0 }} animate={{ y: "0%", opacity: 1 }}
-                  transition={{ duration: 0.85, delay: 0.5, ease: E }}
-                  style={{ fontFamily: SAT, fontWeight: 800, fontSize: "clamp(44px,6.5vw,80px)", letterSpacing: "-0.035em", lineHeight: 1.05, color: C.text }}>
-                  Company intel,
+                  initial={{ y: "106%", opacity: 0 }} animate={{ y: "0%", opacity: 1 }}
+                  transition={{ duration: 1.0, delay: 0.4, ease: E }}
+                  style={{ fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, fontSize: "clamp(56px,8vw,108px)", letterSpacing: "-0.02em", lineHeight: 0.9, color: C.text, marginBottom: 8 }}>
+                  Intelligence
                 </motion.h1>
               </div>
-              <div className="overflow-hidden mb-8">
+              <div className="overflow-hidden mb-10">
                 <motion.h1
-                  initial={{ y: "105%", opacity: 0 }} animate={{ y: "0%", opacity: 1 }}
-                  transition={{ duration: 0.85, delay: 0.65, ease: E }}
-                  style={{ fontFamily: SAT, fontWeight: 800, fontSize: "clamp(44px,6.5vw,80px)", letterSpacing: "-0.035em", lineHeight: 1.05, color: C.amber }}>
-                  stealth-scraped.
+                  initial={{ y: "106%", opacity: 0 }} animate={{ y: "0%", opacity: 1 }}
+                  transition={{ duration: 1.0, delay: 0.55, ease: E }}
+                  style={{ fontFamily: SERIF, fontWeight: 700, fontSize: "clamp(56px,8vw,108px)", letterSpacing: "-0.03em", lineHeight: 0.9, color: C.gold }}>
+                  runs deep.
                 </motion.h1>
               </div>
 
               <motion.p
-                initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 0.9, ease: E }}
-                style={{ fontSize: 17, color: C.muted, lineHeight: 1.75, maxWidth: 420, marginBottom: 32 }}>
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.85 }}
+                style={{ fontFamily: SANS, fontWeight: 300, fontSize: 18, color: C.muted, lineHeight: 1.85, maxWidth: 400, marginBottom: 36 }}>
                 Paste domains. Pick a pack —{" "}
-                <span style={{ color: C.amber }}>SDR</span>,{" "}
+                <span style={{ color: C.gold }}>SDR</span>,{" "}
                 <span style={{ color: C.indigo }}>Recruiter</span>, or{" "}
-                <span style={{ color: C.green }}>VC</span>. Get pack-specific signals
-                streamed in 60 seconds from Hyperbrowser&apos;s stealth crawler.
+                <span style={{ color: C.sage }}>VC</span>. Get pack-specific signals
+                extracted in 60 seconds by stealth crawler.
               </motion.p>
 
-              <motion.div
-                initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 1.05, ease: E }}
-                className="flex items-center gap-3">
+              <motion.div className="flex items-center gap-3"
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 1.0 }}>
                 <a href="/app"
-                  style={{ fontFamily: SAT, fontWeight: 700, fontSize: 15, color: "#000", background: C.amber, padding: "12px 28px", borderRadius: 9, textDecoration: "none", letterSpacing: "-0.01em", display: "inline-block", transition: "all 0.15s" }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; (e.currentTarget as HTMLElement).style.boxShadow = `0 12px 32px ${C.amberGlow}`; }}
+                  style={{ fontFamily: SANS, fontWeight: 600, fontSize: 15, color: C.bg, background: C.gold, padding: "13px 30px", borderRadius: 4, textDecoration: "none", display: "inline-block", transition: "all 0.15s" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; (e.currentTarget as HTMLElement).style.boxShadow = `0 12px 36px ${C.goldGlow}`; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ""; (e.currentTarget as HTMLElement).style.boxShadow = ""; }}>
-                  Start enriching →
+                  Start extracting
                 </a>
-                <a href="#mcp"
-                  style={{ fontFamily: SAT, fontWeight: 600, fontSize: 15, color: C.muted, padding: "12px 20px", borderRadius: 9, textDecoration: "none", letterSpacing: "-0.01em", border: `1px solid ${C.border}`, display: "inline-block", transition: "all 0.15s" }}
+                <a href="#packs"
+                  style={{ fontFamily: SANS, fontWeight: 400, fontSize: 15, color: C.muted, padding: "13px 22px", borderRadius: 4, textDecoration: "none", border: `1px solid ${C.border}`, display: "inline-block", transition: "all 0.15s" }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = C.text; (e.currentTarget as HTMLElement).style.borderColor = C.borderHi; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = C.muted; (e.currentTarget as HTMLElement).style.borderColor = C.border; }}>
-                  View MCP docs
+                  See the packs →
                 </a>
-              </motion.div>
-
-              <motion.div className="flex items-center gap-4 mt-10"
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.6 }}>
-                {[
-                  { value: "3", label: "intelligence packs" },
-                  { value: "60s", label: "avg enrichment" },
-                  { value: "MCP", label: "JSON-RPC 2.0" },
-                ].map(({ value, label }) => (
-                  <div key={label} className="flex flex-col">
-                    <span style={{ fontFamily: SAT, fontWeight: 800, fontSize: 20, color: C.text, letterSpacing: "-0.03em" }}>{value}</span>
-                    <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.1em" }}>{label.toUpperCase()}</span>
-                  </div>
-                ))}
               </motion.div>
             </div>
 
-            {/* Right — live enrichment terminal */}
+            {/* right — terminal */}
             <motion.div
-              initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.9, delay: 0.7, ease: E }}>
-              <EnrichmentDemo />
+              initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.0, delay: 0.65, ease: E }}>
+              <Terminal />
             </motion.div>
           </div>
         </section>
 
         {/* ── TICKER ── */}
-        <div className="relative overflow-hidden border-y py-3.5" style={{ borderColor: C.border, background: C.surface }}>
+        <div className="relative overflow-hidden border-y py-3" style={{ borderColor: C.border, background: C.surface }}>
           <div className="absolute inset-0 pointer-events-none z-10"
             style={{ background: `linear-gradient(to right, ${C.surface} 0%, transparent 8%, transparent 92%, ${C.surface} 100%)` }} />
-          <motion.div className="flex gap-12 whitespace-nowrap"
-            animate={{ x: ["0%", "-50%"] }} transition={{ duration: 28, repeat: Infinity, ease: "linear" }}>
+          <motion.div className="flex gap-14 whitespace-nowrap"
+            animate={{ x: ["0%", "-50%"] }} transition={{ duration: 30, repeat: Infinity, ease: "linear" }}>
             {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
-              <span key={i} className="inline-flex items-center gap-3 shrink-0">
-                <span style={{ fontFamily: MONO, fontSize: 11, color: C.dim, letterSpacing: "0.06em" }}>{item}</span>
-                <span style={{ color: C.amber, fontSize: 6, opacity: 0.6 }}>◆</span>
+              <span key={i} className="inline-flex items-center gap-5 shrink-0">
+                <span style={{ fontFamily: MONO, fontSize: 10, color: C.dim, letterSpacing: "0.08em" }}>{item}</span>
+                <span style={{ color: C.gold, fontSize: 5, opacity: 0.5 }}>◆</span>
               </span>
             ))}
           </motion.div>
         </div>
 
         {/* ── PACKS ── */}
-        <section className="py-24 border-b" id="packs" style={{ borderColor: C.border }}>
-          <div className="max-w-[1280px] mx-auto px-6 lg:px-12">
-            <div className="mb-12">
-              <motion.div
+        <section className="py-28 lg:py-36" id="packs">
+          <div className="max-w-[1200px] mx-auto px-8 lg:px-14">
+
+            <div className="mb-16 lg:mb-20">
+              <motion.p
                 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
-                style={{ fontFamily: MONO, fontSize: 10, color: C.amber, letterSpacing: "0.16em" }}
-                className="uppercase mb-4">
+                style={{ fontFamily: MONO, fontSize: 9, color: C.gold, letterSpacing: "0.18em" }}
+                className="uppercase mb-5">
                 / Three packs
-              </motion.div>
+              </motion.p>
               <div className="overflow-hidden">
                 <motion.h2
-                  initial={{ y: "105%", opacity: 0 }} whileInView={{ y: "0%", opacity: 1 }}
-                  viewport={{ once: true }} transition={{ duration: 0.8, ease: E }}
-                  style={{ fontFamily: SAT, fontWeight: 800, fontSize: "clamp(28px,3.8vw,52px)", letterSpacing: "-0.03em", color: C.text, lineHeight: 1.1 }}>
+                  initial={{ y: "104%", opacity: 0 }} whileInView={{ y: "0%", opacity: 1 }}
+                  viewport={{ once: true }} transition={{ duration: 0.9, ease: E }}
+                  style={{ fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, fontSize: "clamp(38px,5.5vw,76px)", letterSpacing: "-0.02em", lineHeight: 1.0, color: C.text }}>
                   Same crawl.{" "}
-                  <span style={{ color: C.muted }}>Three lenses.</span>
+                  <span style={{ fontStyle: "normal", fontWeight: 700 }}>Three lenses.</span>
                 </motion.h2>
               </div>
               <motion.p
-                initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.15 }}
-                style={{ fontSize: 15, color: C.muted, lineHeight: 1.7, maxWidth: 520, marginTop: 12 }}>
-                One stealth scrape per company. The pack you pick determines which signals
-                get surfaced, which people get prioritised, and how the CSV exports.
+                initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.15 }}
+                style={{ fontFamily: SANS, fontWeight: 300, fontSize: 17, color: C.muted, lineHeight: 1.85, maxWidth: 480, marginTop: 14 }}>
+                One stealth scrape per company. The pack you pick determines which signals surface, which people get prioritised, and how the CSV exports.
               </motion.p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {PACKS.map((pack, i) => <PackCard key={pack.id} pack={pack} index={i} />)}
+
+            <div className="space-y-px" style={{ borderTop: `1px solid ${C.border}` }}>
+              {PACKS.map((pack, i) => (
+                <motion.div key={pack.id}
+                  initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }} transition={{ duration: 0.6, delay: i * 0.1, ease: E }}
+                  className="grid grid-cols-1 lg:grid-cols-[120px_1fr_1fr] gap-8 lg:gap-12 py-10 border-b group"
+                  style={{ borderColor: C.border }}>
+
+                  <div className="flex flex-col gap-2">
+                    <span style={{ fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, fontSize: 52, color: C.border, lineHeight: 1, letterSpacing: "-0.02em", transition: "color 0.3s" }}
+                      className="group-hover:text-current"
+                      onMouseEnter={e => (e.currentTarget.style.color = pack.color + "50")}
+                      onMouseLeave={e => (e.currentTarget.style.color = C.border)}>
+                      {pack.n}
+                    </span>
+                    <span style={{ fontFamily: MONO, fontSize: 9, color: pack.color, background: `${pack.color}15`, border: `1px solid ${pack.color}30`, borderRadius: 2, padding: "3px 8px", letterSpacing: "0.12em", alignSelf: "flex-start" }}>
+                      {pack.label.toUpperCase()}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 22, color: C.text, letterSpacing: "-0.02em", marginBottom: 10, lineHeight: 1.2 }}>
+                      {pack.headline}
+                    </h3>
+                    <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 15, color: C.muted, lineHeight: 1.8 }}>
+                      {pack.body}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-3">
+                    {pack.signals.map((sig, j) => (
+                      <div key={j} className="flex items-start gap-3">
+                        <span style={{ color: pack.color, fontSize: 7, marginTop: 5, flexShrink: 0 }}>◆</span>
+                        <span style={{ fontFamily: MONO, fontSize: 11, color: C.muted, lineHeight: 1.6, letterSpacing: "0.02em" }}>{sig}</span>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* ── HOW IT WORKS ── */}
-        <section className="py-24 border-b" style={{ borderColor: C.border }}>
-          <div className="max-w-[1280px] mx-auto px-6 lg:px-12">
-            <div className="mb-12">
-              <motion.div
+        {/* ── PROCESS ── */}
+        <section className="py-28 lg:py-36 border-t" id="process" style={{ borderColor: C.border, background: C.surface }}>
+          <div className="max-w-[1200px] mx-auto px-8 lg:px-14">
+            <div className="mb-16 lg:mb-20">
+              <motion.p
                 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
-                style={{ fontFamily: MONO, fontSize: 10, color: C.amber, letterSpacing: "0.16em" }}
-                className="uppercase mb-4">
+                style={{ fontFamily: MONO, fontSize: 9, color: C.gold, letterSpacing: "0.18em" }}
+                className="uppercase mb-5">
                 / How it works
-              </motion.div>
+              </motion.p>
               <div className="overflow-hidden">
                 <motion.h2
-                  initial={{ y: "105%", opacity: 0 }} whileInView={{ y: "0%", opacity: 1 }}
-                  viewport={{ once: true }} transition={{ duration: 0.8, ease: E }}
-                  style={{ fontFamily: SAT, fontWeight: 800, fontSize: "clamp(28px,3.8vw,52px)", letterSpacing: "-0.03em", color: C.text, lineHeight: 1.1 }}>
-                  Intelligence in{" "}
-                  <span style={{ color: C.amber }}>60 seconds.</span>
+                  initial={{ y: "104%", opacity: 0 }} whileInView={{ y: "0%", opacity: 1 }}
+                  viewport={{ once: true }} transition={{ duration: 0.9, ease: E }}
+                  style={{ fontFamily: SERIF, fontWeight: 700, fontSize: "clamp(38px,5.5vw,76px)", letterSpacing: "-0.025em", lineHeight: 1.0, color: C.text }}>
+                  Three steps.{" "}
+                  <em style={{ fontWeight: 400, color: C.gold }}>Sixty seconds.</em>
                 </motion.h2>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-px" style={{ background: C.border }}>
-              {[
-                { n: "01", title: "Paste domains", body: "Enter one domain per line — up to 10 per run. stripe.com, notion.so, linear.app. No URLs, just domains.", icon: "↗" },
-                { n: "02", title: "Pick your pack", body: "Choose SDR for buying signals, Recruiter for hiring intel, or VC for investment signals. The pack reshapes the entire extraction.", icon: "◈" },
-                { n: "03", title: "Signals streamed live", body: "Watch intelligence stream back in real time from a stealth Hyperbrowser session. Export to pack-shaped CSV or call via MCP.", icon: "⚡" },
-              ].map(({ n, title, body, icon }, i) => (
+              {STEPS.map(({ n, title, body }, i) => (
                 <motion.div key={n}
-                  initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }} transition={{ duration: 0.5, delay: i * 0.1, ease: E }}
-                  style={{ background: C.surface, padding: "32px 28px" }}>
-                  <div className="flex items-center justify-between mb-6">
-                    <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.12em" }}>{n}</span>
-                    <span style={{ fontSize: 20, color: C.amber }}>{icon}</span>
+                  initial={{ opacity: 0, y: 14 }} whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }} transition={{ duration: 0.6, delay: i * 0.12, ease: E }}
+                  style={{ background: C.surface, padding: "36px 32px" }}>
+                  <div className="mb-8">
+                    <span style={{ fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, fontSize: 64, color: C.border, lineHeight: 1, letterSpacing: "-0.02em" }}>{n}</span>
                   </div>
-                  <h3 style={{ fontFamily: SAT, fontWeight: 700, fontSize: 18, color: C.text, letterSpacing: "-0.02em", marginBottom: 10 }}>{title}</h3>
-                  <p style={{ fontSize: 13, color: C.muted, lineHeight: 1.7 }}>{body}</p>
+                  <h3 style={{ fontFamily: SERIF, fontWeight: 700, fontSize: 20, color: C.text, letterSpacing: "-0.02em", marginBottom: 10, lineHeight: 1.2 }}>{title}</h3>
+                  <p style={{ fontFamily: SANS, fontWeight: 300, fontSize: 14, color: C.muted, lineHeight: 1.8 }}>{body}</p>
                 </motion.div>
               ))}
             </div>
@@ -667,166 +572,143 @@ export default function LandingPage() {
         </section>
 
         {/* ── MCP ── */}
-        <section className="py-24 border-b" id="mcp" style={{ borderColor: C.border, background: C.surface }}>
-          <div className="max-w-[1280px] mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-16 items-center">
+        <section className="py-28 lg:py-36 border-t" id="mcp" style={{ borderColor: C.border }}>
+          <div className="max-w-[1200px] mx-auto px-8 lg:px-14 grid grid-cols-1 lg:grid-cols-[1fr_1.15fr] gap-16 lg:gap-24 items-start">
             <div>
-              <motion.div
+              <motion.p
                 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
-                style={{ fontFamily: MONO, fontSize: 10, color: C.indigo, letterSpacing: "0.16em" }}
-                className="uppercase mb-4">
+                style={{ fontFamily: MONO, fontSize: 9, color: C.indigo, letterSpacing: "0.18em" }}
+                className="uppercase mb-5">
                 / MCP-native
-              </motion.div>
+              </motion.p>
               <div className="overflow-hidden mb-6">
                 <motion.h2
-                  initial={{ y: "105%", opacity: 0 }} whileInView={{ y: "0%", opacity: 1 }}
-                  viewport={{ once: true }} transition={{ duration: 0.8, ease: E }}
-                  style={{ fontFamily: SAT, fontWeight: 800, fontSize: "clamp(28px,3.6vw,50px)", letterSpacing: "-0.03em", color: C.text, lineHeight: 1.1 }}>
+                  initial={{ y: "104%", opacity: 0 }} whileInView={{ y: "0%", opacity: 1 }}
+                  viewport={{ once: true }} transition={{ duration: 0.9, ease: E }}
+                  style={{ fontFamily: SERIF, fontWeight: 700, fontSize: "clamp(32px,4.5vw,60px)", letterSpacing: "-0.025em", lineHeight: 1.0, color: C.text }}>
                   Runs inside<br />
-                  <span style={{ color: C.indigo }}>Claude + Cursor.</span>
+                  <em style={{ fontWeight: 400, color: C.indigo }}>Claude + Cursor.</em>
                 </motion.h2>
               </div>
               <motion.p
-                initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.15 }}
-                style={{ fontSize: 15, color: C.muted, lineHeight: 1.75, maxWidth: 440 }}>
-                ProspectIQ ships as a JSON-RPC 2.0 MCP server at{" "}
-                <code style={{ fontFamily: MONO, fontSize: 12, color: C.text, background: C.surfaceHi, padding: "2px 7px", borderRadius: 4, border: `1px solid ${C.border}` }}>/api/mcp</code>.
-                Add one config block to Claude Desktop or Cursor. Call{" "}
-                <code style={{ fontFamily: MONO, fontSize: 12, color: C.text, background: C.surfaceHi, padding: "2px 7px", borderRadius: 4, border: `1px solid ${C.border}` }}>enrich_companies</code>{" "}
+                initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.15 }}
+                style={{ fontFamily: SANS, fontWeight: 300, fontSize: 16, color: C.muted, lineHeight: 1.85, marginBottom: 24 }}>
+                Lode ships as a JSON-RPC 2.0 MCP server at{" "}
+                <code style={{ fontFamily: MONO, fontSize: 11.5, color: C.text, background: C.surfaceHi, padding: "2px 6px", borderRadius: 3, border: `1px solid ${C.border}` }}>/api/mcp</code>.
+                Add one config block. Call{" "}
+                <code style={{ fontFamily: MONO, fontSize: 11.5, color: C.text, background: C.surfaceHi, padding: "2px 6px", borderRadius: 3, border: `1px solid ${C.border}` }}>enrich_companies</code>{" "}
                 inline — same stealth crawler, three packs, no context switch.
               </motion.p>
               <motion.div
                 initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.3 }}
-                className="mt-6 flex flex-col gap-3">
-                <div className="flex items-center gap-3">
-                  <span style={{ fontFamily: MONO, fontSize: 10, color: C.indigo, background: C.indigoDim, border: `1px solid ${C.indigo}40`, borderRadius: 4, padding: "3px 8px", letterSpacing: "0.08em" }}>TOOL</span>
-                  <code style={{ fontFamily: MONO, fontSize: 12, color: C.muted }}>enrich_companies(domains, pack)</code>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span style={{ fontFamily: MONO, fontSize: 10, color: C.indigo, background: C.indigoDim, border: `1px solid ${C.indigo}40`, borderRadius: 4, padding: "3px 8px", letterSpacing: "0.08em" }}>TOOL</span>
-                  <code style={{ fontFamily: MONO, fontSize: 12, color: C.muted }}>list_packs()</code>
-                </div>
+                viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.25 }}
+                className="space-y-2.5">
+                {[
+                  { label: "TOOL", name: "enrich_companies(domains[], pack)" },
+                  { label: "TOOL", name: "list_packs()" },
+                ].map(({ label, name }) => (
+                  <div key={name} className="flex items-center gap-3">
+                    <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: "0.12em", color: C.indigo, background: C.indigoDim, border: `1px solid ${C.indigo}35`, borderRadius: 2, padding: "3px 7px" }}>{label}</span>
+                    <code style={{ fontFamily: MONO, fontSize: 11, color: C.muted }}>{name}</code>
+                  </div>
+                ))}
               </motion.div>
             </div>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.1, ease: E }}
-              className="rounded-xl overflow-hidden"
-              style={{ background: "#0D0C11", border: `1px solid ${C.border}`, boxShadow: `0 0 60px -10px ${C.indigo}20` }}>
-              <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: C.border }}>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#FF5F56" }} />
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#FFBD2E" }} />
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#27C93F" }} />
+              viewport={{ once: true }} transition={{ duration: 0.8, delay: 0.1, ease: E }}
+              className="rounded-lg overflow-hidden"
+              style={{ background: C.surface, border: `1px solid ${C.border}`, boxShadow: `0 40px 80px rgba(0,0,0,0.4)` }}>
+              <div className="flex items-center justify-between px-5 py-3.5 border-b" style={{ borderColor: C.border }}>
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#3A3530" }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#3A3530" }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#3A3530" }} />
                 </div>
-                <span style={{ fontFamily: MONO, fontSize: 10, color: C.dim, letterSpacing: "0.1em" }}>CLAUDE_DESKTOP_CONFIG.JSON</span>
+                <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.12em" }}>CLAUDE_DESKTOP_CONFIG.JSON</span>
                 <CopyButton text={MCP_CONFIG} />
               </div>
-              <pre style={{ fontFamily: MONO, fontSize: 12.5, lineHeight: 1.75, color: "#C8C2D8", padding: "20px 24px", margin: 0, overflow: "auto" }}>
+              <pre style={{ fontFamily: MONO, fontSize: 12, lineHeight: 1.8, color: "#BDB8AA", padding: "22px 26px", margin: 0, overflow: "auto" }}>
                 <span style={{ color: C.dim }}>{"{"}</span>{"\n"}
                 {"  "}<span style={{ color: C.indigo }}>&quot;mcpServers&quot;</span><span style={{ color: C.dim }}>: {"{"}</span>{"\n"}
-                {"    "}<span style={{ color: C.indigo }}>&quot;prospectiq&quot;</span><span style={{ color: C.dim }}>: {"{"}</span>{"\n"}
-                {"      "}<span style={{ color: "#6B9966" }}>&quot;command&quot;</span><span style={{ color: C.dim }}>:</span>{" "}<span style={{ color: C.amber }}>&quot;npx&quot;</span><span style={{ color: C.dim }}>,</span>{"\n"}
-                {"      "}<span style={{ color: "#6B9966" }}>&quot;args&quot;</span><span style={{ color: C.dim }}>: [</span>{"\n"}
-                {"        "}<span style={{ color: C.amber }}>&quot;mcp-remote&quot;</span><span style={{ color: C.dim }}>,</span>{"\n"}
-                {"        "}<span style={{ color: C.amber }}>&quot;https://jstack-omega.vercel.app/api/mcp&quot;</span>{"\n"}
+                {"    "}<span style={{ color: C.indigo }}>&quot;lode&quot;</span><span style={{ color: C.dim }}>: {"{"}</span>{"\n"}
+                {"      "}<span style={{ color: "#7A9C6A" }}>&quot;command&quot;</span><span style={{ color: C.dim }}>:</span>{" "}<span style={{ color: C.gold }}>&quot;npx&quot;</span><span style={{ color: C.dim }}>,</span>{"\n"}
+                {"      "}<span style={{ color: "#7A9C6A" }}>&quot;args&quot;</span><span style={{ color: C.dim }}>: [</span>{"\n"}
+                {"        "}<span style={{ color: C.gold }}>&quot;mcp-remote&quot;</span><span style={{ color: C.dim }}>,</span>{"\n"}
+                {"        "}<span style={{ color: C.gold }}>&quot;https://jstack-omega.vercel.app/api/mcp&quot;</span>{"\n"}
                 {"      "}<span style={{ color: C.dim }}>]</span>{"\n"}
                 {"    "}<span style={{ color: C.dim }}>{"}"}</span>{"\n"}
                 {"  "}<span style={{ color: C.dim }}>{"}"}</span>{"\n"}
                 <span style={{ color: C.dim }}>{"}"}</span>
               </pre>
               <div className="px-6 py-4 border-t" style={{ borderColor: C.border }}>
-                <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.1em" }}>$ THEN IN CLAUDE</span>
-                <div style={{ fontFamily: MONO, fontSize: 13, color: C.green, marginTop: 6 }}>
-                  &gt; enrich stripe.com and linear.app with the SDR pack
+                <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.12em" }}>THEN IN CLAUDE</span>
+                <div style={{ fontFamily: MONO, fontSize: 12, color: C.sage, marginTop: 6 }}>
+                  &gt; extract stripe.com and linear.app with the SDR pack
                 </div>
               </div>
             </motion.div>
           </div>
         </section>
 
-        {/* ── FEATURES ── */}
-        <section className="py-24 border-b" id="features" style={{ borderColor: C.border }}>
-          <div className="max-w-[1280px] mx-auto px-6 lg:px-12">
-            <div className="mb-10">
-              <motion.div
-                initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
-                style={{ fontFamily: MONO, fontSize: 10, color: C.amber, letterSpacing: "0.16em" }}
-                className="uppercase mb-4">
-                / Capabilities
-              </motion.div>
-              <div className="overflow-hidden">
-                <motion.h2
-                  initial={{ y: "105%", opacity: 0 }} whileInView={{ y: "0%", opacity: 1 }}
-                  viewport={{ once: true }} transition={{ duration: 0.8, ease: E }}
-                  style={{ fontFamily: SAT, fontWeight: 800, fontSize: "clamp(28px,3.8vw,52px)", letterSpacing: "-0.03em", color: C.text, lineHeight: 1.1 }}>
-                  Stealth scrape.{" "}
-                  <span style={{ color: C.muted }}>Pack-aware extract.</span>
-                </motion.h2>
-              </div>
-            </div>
-            <div className="border-t" style={{ borderColor: C.border }}>
-              {FEATURES.map((f, i) => <FeatureRow key={f.n} {...f} index={i} />)}
-            </div>
-          </div>
-        </section>
-
         {/* ── CTA ── */}
-        <section className="py-28 relative overflow-hidden" style={{ background: C.surface }}>
+        <section className="py-32 lg:py-40 border-t relative overflow-hidden" style={{ borderColor: C.border, background: C.surface }}>
           <div className="absolute inset-0 pointer-events-none"
-            style={{ background: `radial-gradient(ellipse 70% 80% at 50% 50%, ${C.amberDim} 0%, transparent 65%)` }} />
-          <div className="relative z-10 max-w-[1280px] mx-auto px-6 lg:px-12 text-center">
+            style={{ background: `radial-gradient(ellipse 60% 70% at 50% 50%, ${C.goldDim} 0%, transparent 60%)` }} />
+          <div className="relative z-10 max-w-[1200px] mx-auto px-8 lg:px-14 text-center">
+            <motion.p
+              initial={{ opacity: 0, y: 6 }} whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              style={{ fontFamily: MONO, fontSize: 9, color: C.gold, letterSpacing: "0.18em" }}
+              className="uppercase mb-6">
+              / Start extracting
+            </motion.p>
             <div className="overflow-hidden mb-2">
               <motion.h2
-                initial={{ y: "105%", opacity: 0 }} whileInView={{ y: "0%", opacity: 1 }}
-                viewport={{ once: true }} transition={{ duration: 0.9, ease: E }}
-                style={{ fontFamily: SAT, fontWeight: 800, fontSize: "clamp(40px,7vw,96px)", letterSpacing: "-0.04em", lineHeight: 0.95, color: C.text }}>
+                initial={{ y: "104%", opacity: 0 }} whileInView={{ y: "0%", opacity: 1 }}
+                viewport={{ once: true }} transition={{ duration: 1.0, ease: E }}
+                style={{ fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, fontSize: "clamp(48px,8vw,112px)", letterSpacing: "-0.025em", lineHeight: 0.92, color: C.text }}>
                 Stop guessing.
               </motion.h2>
             </div>
-            <div className="overflow-hidden mb-10">
+            <div className="overflow-hidden mb-12">
               <motion.h2
-                initial={{ y: "105%", opacity: 0 }} whileInView={{ y: "0%", opacity: 1 }}
-                viewport={{ once: true }} transition={{ duration: 0.9, delay: 0.08, ease: E }}
-                style={{ fontFamily: SAT, fontWeight: 800, fontStyle: "italic", fontSize: "clamp(40px,7vw,96px)", letterSpacing: "-0.04em", lineHeight: 0.95, color: C.amber }}>
+                initial={{ y: "104%", opacity: 0 }} whileInView={{ y: "0%", opacity: 1 }}
+                viewport={{ once: true }} transition={{ duration: 1.0, delay: 0.08, ease: E }}
+                style={{ fontFamily: SERIF, fontWeight: 700, fontSize: "clamp(48px,8vw,112px)", letterSpacing: "-0.03em", lineHeight: 0.92, color: C.gold }}>
                 Start knowing.
               </motion.h2>
             </div>
             <motion.p
-              initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.2 }}
-              style={{ fontSize: 17, color: C.muted, lineHeight: 1.75, maxWidth: 420, margin: "0 auto 36px" }}>
-              SDR, Recruiter, or VC. Pick your lens. Get pack-specific signals from
-              a stealth Hyperbrowser session — in the app or via MCP.
+              style={{ fontFamily: SANS, fontWeight: 300, fontSize: 17, color: C.muted, lineHeight: 1.85, maxWidth: 380, margin: "0 auto 40px" }}>
+              Three packs. Sixty seconds. Every company, extracted.
             </motion.p>
             <motion.a href="/app"
-              initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.3 }}
-              style={{ fontFamily: SAT, fontWeight: 700, fontSize: 16, color: "#000", background: C.amber, padding: "14px 36px", borderRadius: 10, textDecoration: "none", display: "inline-block", letterSpacing: "-0.01em", transition: "all 0.15s" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; (e.currentTarget as HTMLElement).style.boxShadow = `0 16px 40px ${C.amberGlow}`; }}
+              style={{ fontFamily: SANS, fontWeight: 600, fontSize: 16, color: C.bg, background: C.gold, padding: "15px 40px", borderRadius: 4, textDecoration: "none", display: "inline-block", transition: "all 0.15s" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; (e.currentTarget as HTMLElement).style.boxShadow = `0 16px 48px ${C.goldGlow}`; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ""; (e.currentTarget as HTMLElement).style.boxShadow = ""; }}>
-              Start enriching → free
+              Open Lode — free
             </motion.a>
           </div>
         </section>
 
         {/* ── FOOTER ── */}
-        <footer className="py-10 border-t" style={{ borderColor: C.border, background: C.bg }}>
-          <div className="max-w-[1280px] mx-auto px-6 lg:px-12 flex flex-col md:flex-row items-center justify-between gap-4">
-            <span style={{ fontFamily: SAT, fontWeight: 800, fontSize: 16, color: C.text, letterSpacing: "-0.03em" }}>
-              Prospect<span style={{ color: C.amber }}>IQ</span>
+        <footer className="py-10 border-t" style={{ borderColor: C.border }}>
+          <div className="max-w-[1200px] mx-auto px-8 lg:px-14 flex flex-col md:flex-row items-center justify-between gap-4">
+            <span style={{ fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, fontSize: 18, color: C.text, letterSpacing: "-0.01em" }}>
+              Lode<span style={{ color: C.gold }}>·</span>
             </span>
             <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full" style={{ background: C.amber, opacity: 0.7 }} />
-              <span style={{ fontFamily: MONO, fontSize: 10, color: C.dim, letterSpacing: "0.1em" }}>
-                STEALTH-POWERED BY HYPERBROWSER
-              </span>
+              <span className="w-1 h-1 rounded-full" style={{ background: C.gold, opacity: 0.6 }} />
+              <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.12em" }}>STEALTH-POWERED BY HYPERBROWSER</span>
             </div>
-            <span style={{ fontFamily: MONO, fontSize: 10, color: C.dim, letterSpacing: "0.08em" }}>
-              © 2026 PROSPECTIQ
-            </span>
+            <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.1em" }}>© 2026 LODE</span>
           </div>
         </footer>
       </div>

@@ -6,6 +6,8 @@ import {
   useScroll,
   useSpring,
   useMotionValue,
+  useTransform,
+  useInView,
   AnimatePresence,
 } from "framer-motion";
 import SmoothScroll from "./components/SmoothScroll";
@@ -158,7 +160,119 @@ const MCP_CONFIG = `{
   }
 }`;
 
+/* ─── IMAGES ─── */
+const IMG_HERO    = "https://images.unsplash.com/photo-1518199266791-5375a8f36724?w=2000&q=70&auto=format&fit=crop";
+const IMG_BREAK   = "https://images.unsplash.com/photo-1519751138087-5bf79df62d5b?w=2400&q=75&auto=format&fit=crop";
+const IMG_TEXTURE = "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&q=70&auto=format&fit=crop";
+
+const STATS = [
+  { value: 60,  suffix: "s",  label: "avg extraction" },
+  { value: 3,   suffix: "",   label: "intelligence packs" },
+  { value: 10,  suffix: "",   label: "domains per run" },
+  { value: 25,  suffix: "+",  label: "signal categories" },
+];
+
 /* ─── COMPONENTS ─── */
+
+function CountUp({ to, suffix }: { to: number; suffix: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-10%" });
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!inView) return;
+    const duration = 1400;
+    const steps = 60;
+    const inc = to / steps;
+    let cur = 0;
+    const t = setInterval(() => {
+      cur += inc;
+      if (cur >= to) { setCount(to); clearInterval(t); }
+      else setCount(Math.round(cur));
+    }, duration / steps);
+    return () => clearInterval(t);
+  }, [inView, to]);
+  return <span ref={ref}>{count}{suffix}</span>;
+}
+
+function StatsStrip() {
+  return (
+    <section className="border-b" style={{ borderColor: C.border, background: C.bg }}>
+      <div className="max-w-[1200px] mx-auto px-8 lg:px-14">
+        <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0" style={{ borderColor: C.border }}>
+          {STATS.map(({ value, suffix, label }, i) => (
+            <motion.div key={label}
+              initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }} transition={{ duration: 0.6, delay: i * 0.09, ease: E }}
+              className="flex flex-col gap-1.5 py-8 px-6">
+              <span style={{ fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, fontSize: "clamp(36px,4vw,52px)", color: C.text, letterSpacing: "-0.03em", lineHeight: 1 }}>
+                <CountUp to={value} suffix={suffix} />
+              </span>
+              <span style={{ fontFamily: MONO, fontSize: 9, color: C.muted, letterSpacing: "0.14em" }}>{label.toUpperCase()}</span>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function EditorialBreak() {
+  const ref = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+  const imgY = useTransform(scrollYProgress, [0, 1], ["-8%", "8%"]);
+
+  return (
+    <section ref={ref} className="relative overflow-hidden" style={{ height: "62vh", minHeight: 380 }}>
+      {/* image with parallax + clip-path reveal */}
+      <motion.div
+        initial={{ clipPath: "inset(0 0 100% 0)" }}
+        whileInView={{ clipPath: "inset(0 0 0% 0)" }}
+        viewport={{ once: true, margin: "-5%" }}
+        transition={{ duration: 1.3, ease: [0.16, 1, 0.3, 1] }}
+        className="absolute inset-0">
+        <motion.img
+          src={IMG_BREAK}
+          alt=""
+          style={{ y: imgY, width: "100%", height: "115%", objectFit: "cover", display: "block", top: "-7.5%", position: "absolute" }}
+        />
+        <div className="absolute inset-0" style={{ background: `linear-gradient(160deg, rgba(12,11,9,0.55) 0%, rgba(12,11,9,0.20) 50%, rgba(12,11,9,0.75) 100%)` }} />
+      </motion.div>
+
+      {/* text overlay */}
+      <div className="relative z-10 h-full flex flex-col justify-end px-8 lg:px-14 pb-12 lg:pb-16">
+        <motion.p
+          initial={{ opacity: 0, y: 6 }} whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.6 }}
+          style={{ fontFamily: MONO, fontSize: 9, color: C.gold, letterSpacing: "0.18em", marginBottom: 14 }}>
+          / SEAM
+        </motion.p>
+        <div className="overflow-hidden">
+          <motion.h2
+            initial={{ y: "104%", opacity: 0 }} whileInView={{ y: "0%", opacity: 1 }}
+            viewport={{ once: true }} transition={{ duration: 1.0, delay: 0.7, ease: E }}
+            style={{ fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, fontSize: "clamp(44px,6.5vw,88px)", letterSpacing: "-0.025em", lineHeight: 0.95, color: C.text, maxWidth: 700 }}>
+            Find the seam in any company.
+          </motion.h2>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HeroParallax() {
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
+  const y = useTransform(scrollYProgress, [0, 1], ["0%", "28%"]);
+  const opacity = useTransform(scrollYProgress, [0, 0.7], [0.07, 0]);
+  return (
+    <div ref={ref} className="absolute inset-0 overflow-hidden pointer-events-none">
+      <motion.img
+        src={IMG_HERO} alt=""
+        style={{ y, opacity, width: "100%", height: "130%", objectFit: "cover", objectPosition: "center 60%", display: "block", top: 0, position: "absolute" }}
+      />
+    </div>
+  );
+}
 
 function Grain() {
   return (
@@ -376,9 +490,11 @@ export default function Page() {
 
         {/* ── HERO ── */}
         <section className="relative min-h-screen flex items-center overflow-hidden">
-          {/* very subtle warm glow, top-left */}
-          <div className="absolute top-0 left-0 pointer-events-none"
-            style={{ width: 900, height: 900, background: `radial-gradient(ellipse at 15% 25%, ${C.goldDim} 0%, transparent 60%)`, opacity: 0.5 }} />
+          {/* parallax stone texture bg */}
+          <HeroParallax />
+          {/* warm glow overlay */}
+          <div className="absolute top-0 left-0 pointer-events-none z-[1]"
+            style={{ width: 900, height: 900, background: `radial-gradient(ellipse at 15% 25%, ${C.goldDim} 0%, transparent 60%)`, opacity: 0.6 }} />
 
           <div className="relative z-10 w-full max-w-[1200px] mx-auto px-8 lg:px-14 pt-28 pb-16 grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-10 lg:gap-20 items-center">
             {/* left */}
@@ -462,6 +578,9 @@ export default function Page() {
           </motion.div>
         </div>
 
+        {/* ── STATS ── */}
+        <StatsStrip />
+
         {/* ── PACKS ── */}
         <section className="py-28 lg:py-36" id="packs">
           <div className="max-w-[1200px] mx-auto px-8 lg:px-14">
@@ -526,12 +645,23 @@ export default function Page() {
                         <span style={{ fontFamily: MONO, fontSize: 11, color: C.muted, lineHeight: 1.6, letterSpacing: "0.02em" }}>{sig}</span>
                       </div>
                     ))}
+                    <motion.div
+                      initial={{ opacity: 0, scale: 1.06 }} whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true }} transition={{ duration: 0.9, delay: 0.3 + i * 0.1 }}
+                      className="mt-4 rounded overflow-hidden hidden lg:block"
+                      style={{ height: 80, position: "relative" }}>
+                      <img src={IMG_TEXTURE} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: `${i * 33}% 50%`, filter: `hue-rotate(${i * 30}deg) saturate(0.6)`, opacity: 0.35 }} />
+                      <div className="absolute inset-0" style={{ background: `linear-gradient(to right, ${pack.color}18, transparent)` }} />
+                    </motion.div>
                   </div>
                 </motion.div>
               ))}
             </div>
           </div>
         </section>
+
+        {/* ── EDITORIAL BREAK ── */}
+        <EditorialBreak />
 
         {/* ── PROCESS ── */}
         <section className="py-28 lg:py-36 border-t" id="process" style={{ borderColor: C.border, background: C.surface }}>

@@ -11,21 +11,21 @@ const SANS  = "'Figtree', system-ui, sans-serif";
 const MONO  = "'Geist Mono', monospace";
 
 const C = {
-  bg:       "#F5F1E8",   // warm parchment
-  surface:  "#EDE8DC",
-  card:     "#FAF7F0",
-  border:   "#D8D0C0",
-  borderHi: "#C5BBA8",
-  text:     "#1A1714",
-  muted:    "#6B6358",
-  dim:      "#A89E90",
-  gold:     "#C9A96E",   // Seam gold — SDR + CTAs
-  goldLo:   "rgba(201,169,110,0.12)",
-  green:    "#2D6040",   // forest green — Recruiter
-  greenLo:  "rgba(45,96,64,0.10)",
-  sage:     "#4E8065",   // sage — VC
-  sageLo:   "rgba(78,128,101,0.10)",
-  indigo:   "#7279B8",
+  bg:       "#0C0B09",   // same as landing
+  surface:  "#141210",
+  card:     "#1C1A16",
+  border:   "#242118",
+  borderHi: "#302D26",
+  text:     "#F0EDE6",
+  muted:    "#7A7168",
+  dim:      "#3D3A32",
+  gold:     "#C9A96E",
+  goldLo:   "rgba(201,169,110,0.10)",
+  green:    "#7EA88A",   // sage from DESIGN.md — VC
+  greenLo:  "rgba(126,168,138,0.10)",
+  sage:     "#7EA88A",
+  sageLo:   "rgba(126,168,138,0.10)",
+  indigo:   "#8B90C8",
   rose:     "#C87070",
 };
 
@@ -49,7 +49,7 @@ interface HistoryEntry {
 
 const PACKS: { id: Pack; label: string; sub: string; accent: string; accentLo: string; tag: string }[] = [
   { id: "sdr",       label: "SDR Pack",       sub: "Buying signals + decision-makers",     accent: C.gold,   accentLo: C.goldLo,  tag: "outbound sales" },
-  { id: "recruiter", label: "Recruiter Pack", sub: "Hiring trajectory + tech stack",        accent: C.green,  accentLo: C.greenLo, tag: "talent intel" },
+  { id: "recruiter", label: "Recruiter Pack", sub: "Hiring trajectory + tech stack",        accent: C.indigo, accentLo: "rgba(139,144,200,0.10)", tag: "talent intel" },
   { id: "vc",        label: "VC Pack",        sub: "Funding + traction + team caliber",     accent: C.sage,   accentLo: C.sageLo,  tag: "investment screening" },
 ];
 
@@ -196,7 +196,7 @@ export default function AppPage() {
 
       {/* Nav */}
       <nav className="border-b px-6 py-3.5 flex items-center justify-between shrink-0 sticky top-0 z-10 backdrop-blur-sm"
-        style={{ borderColor: C.border, background: "rgba(245,241,232,0.94)" }}>
+        style={{ borderColor: C.border, background: "rgba(12,11,9,0.94)" }}>
         <Link href="/"
           style={{ fontFamily: SERIF, color: C.text, fontWeight: 400, fontSize: 20, letterSpacing: "-0.02em", fontStyle: "italic" }}
           className="hover:opacity-70 transition-opacity flex items-center gap-1">
@@ -292,10 +292,10 @@ export default function AppPage() {
                   value={input} onChange={e => setInput(e.target.value)}
                   placeholder={"stripe.com\nlinear.app\nvercel.com\n..."} rows={3} disabled={running}
                   style={{ fontFamily: MONO, background: C.card, border: `1px solid ${C.border}`, color: C.text, fontSize: 12 }}
-                  className="flex-1 focus:outline-none focus:border-[#6A9970] focus:shadow-[0_0_0_3px_rgba(106,153,112,0.12)] rounded-xl px-4 py-3 placeholder-[#B8B0A5] transition-all resize-none"
+                  className="flex-1 focus:outline-none focus:border-[#C9A96E] focus:shadow-[0_0_0_3px_rgba(201,169,110,0.10)] rounded-xl px-4 py-3 placeholder-[#3D3A32] transition-all resize-none"
                 />
                 <button type="submit" disabled={running || !input.trim()}
-                  style={{ background: packCfg.accent, color: packCfg.id === "sdr" ? "#1A1714" : "#fff", fontFamily: SANS, fontWeight: 600, fontSize: 13, letterSpacing: "-0.01em" }}
+                  style={{ background: packCfg.accent, color: packCfg.id === "sdr" ? "#1A1714" : "#F0EDE6", fontFamily: SANS, fontWeight: 600, fontSize: 13, letterSpacing: "-0.01em" }}
                   className="px-6 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(0,0,0,0.15)]">
                   {running ? "Running..." : `Run ${packCfg.label} →`}
                 </button>
@@ -327,7 +327,7 @@ export default function AppPage() {
                 <input type="text" value={filter} onChange={e => setFilter(e.target.value)}
                   placeholder="Filter by domain, category, tech..."
                   style={{ background: C.card, border: `1px solid ${C.border}`, color: C.muted, fontSize: 11 }}
-                  className="focus:outline-none rounded-lg px-3 py-1.5 placeholder-[#B8B0A5] w-56 transition-colors focus:border-[#C8C2B8]" />
+                  className="focus:outline-none rounded-lg px-3 py-1.5 placeholder-[#3D3A32] w-56 transition-colors focus:border-[#C9A96E]" />
                 <select value={sortKey} onChange={e => setSortKey(e.target.value as typeof sortKey)}
                   style={{ fontFamily: MONO, background: C.card, border: `1px solid ${C.border}`, color: C.muted, fontSize: 11 }}
                   className="rounded-lg px-2 py-1.5 outline-none">

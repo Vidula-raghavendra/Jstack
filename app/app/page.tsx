@@ -5,21 +5,28 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import type { CompanyProfile, EnrichResult, Pack } from "../api/enrich/route";
 
-/* ─── pastel tokens — matches landing page ─── */
+/* ─── Seam app tokens — warm light bg + gold/green accents ─── */
+const SERIF = "'Bodoni Moda', Georgia, serif";
+const SANS  = "'Figtree', system-ui, sans-serif";
+const MONO  = "'Geist Mono', monospace";
+
 const C = {
-  bg:      "#F7F4ED",
-  surface: "#EDE9DF",
-  card:    "#FDFBF6",
-  border:  "#DDD7CC",
-  text:    "#1A1714",
-  muted:   "#7A7163",
-  dim:     "#B8B0A5",
-  sage:    "#6A9970",
-  sageLo:  "rgba(106,153,112,0.12)",
-  butter:  "#C9A83C",
-  rose:    "#B87E70",
-  indigo:  "#7279B8",
-  green:   "#3A8A52",
+  bg:       "#F5F1E8",   // warm parchment
+  surface:  "#EDE8DC",
+  card:     "#FAF7F0",
+  border:   "#D8D0C0",
+  borderHi: "#C5BBA8",
+  text:     "#1A1714",
+  muted:    "#6B6358",
+  dim:      "#A89E90",
+  gold:     "#C9A96E",   // Seam gold — SDR + CTAs
+  goldLo:   "rgba(201,169,110,0.12)",
+  green:    "#2D6040",   // forest green — Recruiter
+  greenLo:  "rgba(45,96,64,0.10)",
+  sage:     "#4E8065",   // sage — VC
+  sageLo:   "rgba(78,128,101,0.10)",
+  indigo:   "#7279B8",
+  rose:     "#C87070",
 };
 
 type RowState = "pending" | "loading" | "ok" | "error";
@@ -40,10 +47,10 @@ interface HistoryEntry {
   pack: Pack;
 }
 
-const PACKS: { id: Pack; label: string; sub: string; accent: string; tag: string }[] = [
-  { id: "sdr",       label: "SDR Pack",       sub: "Buying signals + decision-makers",     accent: "#6A9970", tag: "outbound sales" },
-  { id: "recruiter", label: "Recruiter Pack", sub: "Hiring trajectory + tech stack",        accent: "#C9A83C", tag: "talent intel" },
-  { id: "vc",        label: "VC Pack",        sub: "Funding + traction + team caliber",     accent: "#7279B8", tag: "investment screening" },
+const PACKS: { id: Pack; label: string; sub: string; accent: string; accentLo: string; tag: string }[] = [
+  { id: "sdr",       label: "SDR Pack",       sub: "Buying signals + decision-makers",     accent: C.gold,   accentLo: C.goldLo,  tag: "outbound sales" },
+  { id: "recruiter", label: "Recruiter Pack", sub: "Hiring trajectory + tech stack",        accent: C.green,  accentLo: C.greenLo, tag: "talent intel" },
+  { id: "vc",        label: "VC Pack",        sub: "Funding + traction + team caliber",     accent: C.sage,   accentLo: C.sageLo,  tag: "investment screening" },
 ];
 
 const PACK_PRESETS: Record<Pack, string[]> = {
@@ -61,9 +68,9 @@ const VELOCITY_CONFIG: Record<string, { label: string; bars: number }> = {
 
 const VEL_COLORS: Record<string, string> = {
   none:       C.dim,
-  slow:       C.butter,
-  steady:     C.indigo,
-  aggressive: C.sage,
+  slow:       C.gold,
+  steady:     C.sage,
+  aggressive: C.green,
 };
 
 function SignalBars({ velocity }: { velocity: string }) {
@@ -185,27 +192,27 @@ export default function AppPage() {
   const okCount   = rows.filter(r => r.state === "ok").length;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: C.bg, color: C.text, fontFamily: "'DM Sans', sans-serif" }}>
+    <div className="min-h-screen flex flex-col" style={{ background: C.bg, color: C.text, fontFamily: SANS, WebkitFontSmoothing: "antialiased" }}>
 
       {/* Nav */}
       <nav className="border-b px-6 py-3.5 flex items-center justify-between shrink-0 sticky top-0 z-10 backdrop-blur-sm"
-        style={{ borderColor: C.border, background: "rgba(247,244,237,0.92)" }}>
+        style={{ borderColor: C.border, background: "rgba(245,241,232,0.94)" }}>
         <Link href="/"
-          style={{ fontFamily: "'Cormorant Garant', serif", color: C.text, fontWeight: 600, fontSize: 18, letterSpacing: "-0.02em" }}
-          className="hover:opacity-70 transition-opacity">
-          Prospect<span style={{ color: C.sage }}>IQ</span>
+          style={{ fontFamily: SERIF, color: C.text, fontWeight: 400, fontSize: 20, letterSpacing: "-0.02em", fontStyle: "italic" }}
+          className="hover:opacity-70 transition-opacity flex items-center gap-1">
+          Seam<span style={{ color: C.gold, fontSize: 8, marginLeft: 1, marginBottom: 2 }}>●</span>
         </Link>
         <div className="flex items-center gap-3">
           {rows.some(r => r.state === "ok") && (
             <button onClick={() => exportToCSV(rows, pack)}
-              style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, color: C.muted, border: `1px solid ${C.border}` }}
+              style={{ fontFamily: MONO, fontSize: 11, color: C.muted, border: `1px solid ${C.border}` }}
               className="px-3 py-1.5 rounded-lg hover:border-[#C8C2B8] hover:text-[#1A1714] transition-all">
               Export {pack.toUpperCase()} CSV ↓
             </button>
           )}
           {running && (
-            <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, color: C.sage }} className="flex items-center gap-1.5">
-              <motion.span className="w-[5px] h-[5px] rounded-full inline-block" style={{ background: C.sage }}
+            <span style={{ fontFamily: MONO, fontSize: 11, color: C.gold }} className="flex items-center gap-1.5">
+              <motion.span className="w-[5px] h-[5px] rounded-full inline-block" style={{ background: C.gold }}
                 animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 1, repeat: Infinity }} />
               {doneCount}/{rows.length} done
             </span>
@@ -219,9 +226,9 @@ export default function AppPage() {
           <aside className="w-[190px] border-r p-3 overflow-y-auto hidden lg:block shrink-0"
             style={{ borderColor: C.border, background: C.surface }}>
             <div className="flex items-center justify-between mb-3">
-              <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9, color: C.dim }} className="uppercase tracking-[0.1em]">History</span>
+              <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim }} className="uppercase tracking-[0.1em]">History</span>
               <button onClick={() => { setHistory([]); localStorage.removeItem("seam-history"); setActiveHistoryId(null); }}
-                style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, color: C.dim }}
+                style={{ fontFamily: MONO, fontSize: 10, color: C.dim }}
                 className="hover:text-[#B87E70] transition-colors">clear</button>
             </div>
             <div className="space-y-0.5">
@@ -236,10 +243,10 @@ export default function AppPage() {
                       {entry.domains.slice(0, 2).join(", ")}{entry.domains.length > 2 ? ` +${entry.domains.length - 2}` : ""}
                     </div>
                     <div className="flex items-center justify-between mt-0.5">
-                      <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, color: C.dim }}>
+                      <span style={{ fontFamily: MONO, fontSize: 10, color: C.dim }}>
                         {new Date(entry.runAt).toLocaleDateString()}
                       </span>
-                      <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 8, color: ep.accent, background: `${ep.accent}14`, border: `1px solid ${ep.accent}30` }}
+                      <span style={{ fontFamily: MONO, fontSize: 8, color: ep.accent, background: `${ep.accent}14`, border: `1px solid ${ep.accent}30` }}
                         className="px-1.5 py-0.5 rounded uppercase tracking-widest">{entry.pack ?? "sdr"}</span>
                     </div>
                   </button>
@@ -261,17 +268,17 @@ export default function AppPage() {
                   style={{
                     background: active ? C.card : "transparent",
                     border: `1px solid ${active ? p.accent : C.border}`,
-                    boxShadow: active ? `0 4px 24px ${p.accent}20` : "none",
+                    boxShadow: active ? `0 0 0 3px ${p.accentLo}, 0 4px 20px ${p.accentLo}` : "none",
                   }}>
                   {active && (
                     <motion.div layoutId="pack-accent" className="absolute left-0 top-0 bottom-0 w-[3px]"
                       style={{ background: p.accent }} transition={{ type: "spring", stiffness: 400, damping: 30 }} />
                   )}
-                  <div className="flex items-baseline gap-2">
-                    <span style={{ fontFamily: "'Cormorant Garant', serif", fontSize: 18, fontWeight: 600, color: active ? C.text : C.muted, letterSpacing: "-0.01em" }}>{p.label}</span>
-                    <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9, color: active ? p.accent : C.dim }} className="uppercase tracking-[0.15em]">{p.tag}</span>
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <span style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 700, color: active ? C.text : C.muted, letterSpacing: "-0.02em" }}>{p.label}</span>
+                    <span style={{ fontFamily: MONO, fontSize: 9, color: active ? p.accent : C.dim }} className="uppercase tracking-[0.12em]">{p.tag}</span>
                   </div>
-                  <p style={{ fontSize: 11, color: active ? C.muted : C.dim, marginTop: 2 }}>{p.sub}</p>
+                  <p style={{ fontSize: 12, color: active ? C.muted : C.dim, marginTop: 3, fontFamily: SANS }}>{p.sub}</p>
                 </button>
               );
             })}
@@ -284,11 +291,11 @@ export default function AppPage() {
                 <textarea
                   value={input} onChange={e => setInput(e.target.value)}
                   placeholder={"stripe.com\nlinear.app\nvercel.com\n..."} rows={3} disabled={running}
-                  style={{ fontFamily: "'Geist Mono', monospace", background: C.card, border: `1px solid ${C.border}`, color: C.text, fontSize: 12 }}
+                  style={{ fontFamily: MONO, background: C.card, border: `1px solid ${C.border}`, color: C.text, fontSize: 12 }}
                   className="flex-1 focus:outline-none focus:border-[#6A9970] focus:shadow-[0_0_0_3px_rgba(106,153,112,0.12)] rounded-xl px-4 py-3 placeholder-[#B8B0A5] transition-all resize-none"
                 />
                 <button type="submit" disabled={running || !input.trim()}
-                  style={{ background: packCfg.accent, color: "#fff", fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13 }}
+                  style={{ background: packCfg.accent, color: packCfg.id === "sdr" ? "#1A1714" : "#fff", fontFamily: SANS, fontWeight: 600, fontSize: 13, letterSpacing: "-0.01em" }}
                   className="px-6 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:-translate-y-px hover:shadow-[0_4px_20px_rgba(0,0,0,0.15)]">
                   {running ? "Running..." : `Run ${packCfg.label} →`}
                 </button>
@@ -296,10 +303,10 @@ export default function AppPage() {
             </form>
 
             <div className="flex flex-wrap gap-2 items-center">
-              <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, color: C.dim }}>Quick add:</span>
+              <span style={{ fontFamily: MONO, fontSize: 10, color: C.dim }}>Quick add:</span>
               {PACK_PRESETS[pack].map(d => (
                 <button key={d} type="button"
-                  style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, color: C.muted, background: C.card, border: `1px solid ${C.border}` }}
+                  style={{ fontFamily: MONO, fontSize: 11, color: C.muted, background: C.card, border: `1px solid ${C.border}` }}
                   onClick={() => setInput(p => { const ex = parseDomains(p); if (ex.includes(d)) return p; return p ? `${p.trim()}\n${d}` : d; })}
                   className="px-3 py-1 rounded-full transition-all"
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = packCfg.accent; (e.currentTarget as HTMLElement).style.color = packCfg.accent; }}
@@ -313,7 +320,7 @@ export default function AppPage() {
           {/* Filter/sort */}
           {rows.length > 0 && (
             <div className="flex flex-wrap items-center gap-3">
-              <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, color: C.muted }}>
+              <span style={{ fontFamily: MONO, fontSize: 11, color: C.muted }}>
                 {okCount} enriched · {rows.length - okCount} pending/failed
               </span>
               <div className="ml-auto flex items-center gap-2">
@@ -322,7 +329,7 @@ export default function AppPage() {
                   style={{ background: C.card, border: `1px solid ${C.border}`, color: C.muted, fontSize: 11 }}
                   className="focus:outline-none rounded-lg px-3 py-1.5 placeholder-[#B8B0A5] w-56 transition-colors focus:border-[#C8C2B8]" />
                 <select value={sortKey} onChange={e => setSortKey(e.target.value as typeof sortKey)}
-                  style={{ fontFamily: "'Geist Mono', monospace", background: C.card, border: `1px solid ${C.border}`, color: C.muted, fontSize: 11 }}
+                  style={{ fontFamily: MONO, background: C.card, border: `1px solid ${C.border}`, color: C.muted, fontSize: 11 }}
                   className="rounded-lg px-2 py-1.5 outline-none">
                   <option value="domain">Sort: Domain</option>
                   <option value="velocity">Sort: Hiring velocity</option>
@@ -343,7 +350,7 @@ export default function AppPage() {
 
           {rows.length === 0 && (
             <div className="text-center py-24">
-              <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, color: C.dim }} className="uppercase tracking-[0.1em]">
+              <div style={{ fontFamily: MONO, fontSize: 11, color: C.dim }} className="uppercase tracking-[0.1em]">
                 Enter domains above to start enriching
               </div>
             </div>
@@ -352,7 +359,6 @@ export default function AppPage() {
       </div>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garant:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap');
         * { -webkit-font-smoothing: antialiased; }
       `}</style>
     </div>
@@ -372,11 +378,11 @@ function CompanyCard({ row, expanded, onToggle, index = 0, pack }: { row: Row; e
       initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.05, ease: [0.16, 1, 0.3, 1] }}
       className="rounded-xl overflow-hidden relative"
-      style={{ background: C.card, border: `1px solid ${state === "loading" ? `${C.sage}50` : C.border}`, transition: "border-color 200ms" }}>
+      style={{ background: C.card, border: `1px solid ${state === "loading" ? `${C.gold}60` : C.border}`, transition: "border-color 200ms" }}>
 
       {state === "loading" && (
         <motion.div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl"
-          style={{ background: C.sage }}
+          style={{ background: C.gold }}
           animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.5, repeat: Infinity }} />
       )}
 
@@ -390,10 +396,10 @@ function CompanyCard({ row, expanded, onToggle, index = 0, pack }: { row: Row; e
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 13, color: C.text }}>{profile?.name ?? domain}</span>
-            {profile?.name && <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, color: C.dim }}>{domain}</span>}
+            <span style={{ fontFamily: SANS, fontWeight: 600, fontSize: 13, color: C.text }}>{profile?.name ?? domain}</span>
+            {profile?.name && <span style={{ fontFamily: MONO, fontSize: 10, color: C.dim }}>{domain}</span>}
             {profile?.productCategory && (
-              <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, color: C.muted, background: C.surface, border: `1px solid ${C.border}` }} className="px-2 py-0.5 rounded-full">{profile.productCategory}</span>
+              <span style={{ fontFamily: MONO, fontSize: 10, color: C.muted, background: C.surface, border: `1px solid ${C.border}` }} className="px-2 py-0.5 rounded-full">{profile.productCategory}</span>
             )}
           </div>
           {profile?.oneLiner && <p style={{ fontSize: 11, color: C.muted }} className="mt-0.5 truncate">{profile.oneLiner}</p>}
@@ -401,22 +407,22 @@ function CompanyCard({ row, expanded, onToggle, index = 0, pack }: { row: Row; e
 
         <div className="hidden md:flex gap-1 shrink-0">
           {profile?.techStack?.slice(0, 3).map(t => (
-            <span key={t} style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9, color: C.muted, background: C.surface, border: `1px solid ${C.border}` }} className="px-1.5 py-0.5 rounded">{t}</span>
+            <span key={t} style={{ fontFamily: MONO, fontSize: 9, color: C.muted, background: C.surface, border: `1px solid ${C.border}` }} className="px-1.5 py-0.5 rounded">{t}</span>
           ))}
-          {(profile?.techStack?.length ?? 0) > 3 && <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9, color: C.dim }}>+{profile!.techStack.length - 3}</span>}
+          {(profile?.techStack?.length ?? 0) > 3 && <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim }}>+{profile!.techStack.length - 3}</span>}
         </div>
 
-        {profile && <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, color: C.muted }} className="shrink-0 hidden sm:block">{profile.openRoles.length} role{profile.openRoles.length !== 1 ? "s" : ""}</span>}
+        {profile && <span style={{ fontFamily: MONO, fontSize: 11, color: C.muted }} className="shrink-0 hidden sm:block">{profile.openRoles.length} role{profile.openRoles.length !== 1 ? "s" : ""}</span>}
 
         <div className="shrink-0 w-36 flex justify-end">
           {state === "loading" && (
-            <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, color: C.sage }} className="flex items-center gap-1.5">
-              <motion.span className="w-[4px] h-[4px] rounded-full inline-block" style={{ background: C.sage }}
+            <span style={{ fontFamily: MONO, fontSize: 10, color: C.gold }} className="flex items-center gap-1.5">
+              <motion.span className="w-[4px] h-[4px] rounded-full inline-block" style={{ background: C.gold }}
                 animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 1, repeat: Infinity }} />scraping
             </span>
           )}
-          {state === "pending" && <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, color: C.dim }}>queued</span>}
-          {state === "error"   && <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, color: C.rose }}>failed</span>}
+          {state === "pending" && <span style={{ fontFamily: MONO, fontSize: 10, color: C.dim }}>queued</span>}
+          {state === "error"   && <span style={{ fontFamily: MONO, fontSize: 10, color: C.rose }}>failed</span>}
           {state === "ok" && vel && (
             <span className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full border font-medium"
               style={{ color: velColor, background: `${velColor}14`, borderColor: `${velColor}30` }}>
@@ -438,10 +444,10 @@ function CompanyCard({ row, expanded, onToggle, index = 0, pack }: { row: Row; e
               style={{ background: `${packCfg.accent}0A`, border: `1px solid ${packCfg.accent}30` }}>
               <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: packCfg.accent }} />
               <div className="flex items-center justify-between mb-2">
-                <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9, color: packCfg.accent }} className="uppercase tracking-[0.15em]">
+                <span style={{ fontFamily: MONO, fontSize: 9, color: packCfg.accent }} className="uppercase tracking-[0.15em]">
                   {packCfg.label} · {signalKey} signals
                 </span>
-                <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9, color: C.dim }}>{packSignals.length} found</span>
+                <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim }}>{packSignals.length} found</span>
               </div>
               <ul className="space-y-1.5">
                 {packSignals.map((s, i) => (
@@ -473,7 +479,7 @@ function CompanyCard({ row, expanded, onToggle, index = 0, pack }: { row: Row; e
           {/* Recent launches — relevant for SDR + VC */}
           {(pack === "sdr" || pack === "vc") && profile.recentLaunches && profile.recentLaunches.length > 0 && (
             <div className="lg:col-span-3">
-              <p style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9, color: C.dim }} className="uppercase tracking-[0.1em] mb-2">Recent launches</p>
+              <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim }} className="uppercase tracking-[0.1em] mb-2">Recent launches</p>
               <div className="flex flex-wrap gap-1.5">
                 {profile.recentLaunches.map((l, i) => (
                   <span key={i} style={{ fontSize: 11, color: C.text, background: C.surface, border: `1px solid ${C.border}` }} className="px-2.5 py-1 rounded-lg">{l}</span>
@@ -483,24 +489,24 @@ function CompanyCard({ row, expanded, onToggle, index = 0, pack }: { row: Row; e
           )}
           {profile.techStack.length > 0 && (
             <div>
-              <p style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9, color: C.dim }} className="uppercase tracking-[0.1em] mb-2">Full Tech Stack</p>
+              <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim }} className="uppercase tracking-[0.1em] mb-2">Full Tech Stack</p>
               <div className="flex flex-wrap gap-1">
                 {profile.techStack.map(t => (
-                  <span key={t} style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, color: C.muted, background: C.surface, border: `1px solid ${C.border}` }} className="px-2 py-0.5 rounded">{t}</span>
+                  <span key={t} style={{ fontFamily: MONO, fontSize: 10, color: C.muted, background: C.surface, border: `1px solid ${C.border}` }} className="px-2 py-0.5 rounded">{t}</span>
                 ))}
               </div>
             </div>
           )}
           {profile.openRoles.length > 0 && (
             <div>
-              <p style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9, color: C.dim }} className="uppercase tracking-[0.1em] mb-2">Open Roles ({profile.openRoles.length})</p>
+              <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim }} className="uppercase tracking-[0.1em] mb-2">Open Roles ({profile.openRoles.length})</p>
               <div className="space-y-1 max-h-44 overflow-y-auto pr-1">
                 {profile.openRoles.map((r, i) => (
                   <div key={i} className="flex items-baseline gap-2" style={{ color: C.muted }}>
-                    <span style={{ color: C.sage }} className="shrink-0 text-[10px]">›</span>
+                    <span style={{ color: C.green }} className="shrink-0 text-[10px]">›</span>
                     <span style={{ fontSize: 11 }}>{r.title}</span>
                     {r.team && <span style={{ color: C.dim, fontSize: 10 }}>{r.team}</span>}
-                    {r.location && <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9, color: C.dim }} className="ml-auto shrink-0">{r.location}</span>}
+                    {r.location && <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim }} className="ml-auto shrink-0">{r.location}</span>}
                   </div>
                 ))}
               </div>
@@ -508,7 +514,7 @@ function CompanyCard({ row, expanded, onToggle, index = 0, pack }: { row: Row; e
           )}
           {profile.keySignals.length > 0 && (
             <div>
-              <p style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9, color: C.dim }} className="uppercase tracking-[0.1em] mb-2">Key Signals</p>
+              <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim }} className="uppercase tracking-[0.1em] mb-2">Key Signals</p>
               <div className="space-y-2">
                 {profile.keySignals.map((s, i) => (
                   <div key={i} className="flex items-start gap-2" style={{ color: C.muted }}>
@@ -522,10 +528,10 @@ function CompanyCard({ row, expanded, onToggle, index = 0, pack }: { row: Row; e
           {profile.people && profile.people.length > 0 && (
             <div className="lg:col-span-3">
               <div className="flex items-center justify-between mb-3">
-                <p style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9, color: C.dim }} className="uppercase tracking-[0.1em]">
+                <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim }} className="uppercase tracking-[0.1em]">
                   People at {profile.name} ({profile.people.length})
                 </p>
-                <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9, color: C.dim }} className="uppercase tracking-[0.1em]">
+                <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim }} className="uppercase tracking-[0.1em]">
                   Public sources only
                 </span>
               </div>
@@ -537,10 +543,10 @@ function CompanyCard({ row, expanded, onToggle, index = 0, pack }: { row: Row; e
                     className="rounded-lg p-3 flex flex-col gap-1"
                     style={{ background: C.surface, border: `1px solid ${C.border}` }}>
                     <div className="flex items-baseline justify-between gap-2">
-                      <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 600, fontSize: 12, color: C.text }} className="truncate">{p.name}</span>
+                      <span style={{ fontFamily: SANS, fontWeight: 600, fontSize: 12, color: C.text }} className="truncate">{p.name}</span>
                       {p.linkedin && (
                         <a href={p.linkedin} target="_blank" rel="noopener noreferrer"
-                          style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9, color: C.indigo }}
+                          style={{ fontFamily: MONO, fontSize: 9, color: C.indigo }}
                           className="hover:underline shrink-0 uppercase tracking-widest">in →</a>
                       )}
                     </div>
@@ -551,12 +557,12 @@ function CompanyCard({ row, expanded, onToggle, index = 0, pack }: { row: Row; e
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
                         {p.email && (
                           <a href={`mailto:${p.email}`}
-                            style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, color: C.sage }}
+                            style={{ fontFamily: MONO, fontSize: 10, color: C.green }}
                             className="hover:underline truncate max-w-full">{p.email}</a>
                         )}
                         {p.twitter && (
                           <a href={p.twitter} target="_blank" rel="noopener noreferrer"
-                            style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9, color: C.dim }}
+                            style={{ fontFamily: MONO, fontSize: 9, color: C.dim }}
                             className="hover:text-[#7279B8] uppercase tracking-widest">x →</a>
                         )}
                       </div>
@@ -578,7 +584,7 @@ function CompanyCard({ row, expanded, onToggle, index = 0, pack }: { row: Row; e
 
       {state === "error" && (
         <div className="border-t px-4 py-3" style={{ borderColor: C.border }}>
-          <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, color: C.rose }}>{error}</span>
+          <span style={{ fontFamily: MONO, fontSize: 10, color: C.rose }}>{error}</span>
         </div>
       )}
     </motion.div>
@@ -588,7 +594,7 @@ function CompanyCard({ row, expanded, onToggle, index = 0, pack }: { row: Row; e
 function DetailCell({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9, color: C.dim }} className="uppercase tracking-[0.1em] mb-1">{label}</p>
+      <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim }} className="uppercase tracking-[0.1em] mb-1">{label}</p>
       <p style={{ fontSize: 12, color: C.muted }}>{value}</p>
     </div>
   );

@@ -1,4 +1,4 @@
-# Design System — Lode
+# Design System — Seam
 
 ## Product Context
 - **What this is:** B2B company intelligence — paste domains, get pack-specific signals extracted by stealth crawler
@@ -7,7 +7,7 @@
 - **Project type:** Web app (landing + power-tool app)
 
 ## Brand
-- **Name:** Lode
+- **Name:** Seam
 - **Tagline:** "Intelligence runs deep."
 - **Voice:** Expert, unhurried, precise. We know the real value of any company. Not a dashboard — a dealer. Think fine art appraisal applied to B2B data.
 - **Tone:** Quiet confidence. The kind that doesn't need to shout.
@@ -77,7 +77,7 @@
 - **No:** spring physics overload, 3D transforms on marketing content, particle systems
 
 ## Key UI Patterns
-- **Logo:** `L·ode` — with a small gold dot between L and ode, or just `Lode` in Bodoni Moda with gold period/dot accent
+- **Logo:** `Seam` in Bodoni Moda italic with a small gold dot accent after the wordmark
 - **Section labels:** mono, uppercase, 10px, gold color, `/ label text`
 - **Process steps:** Large numbered (01 02 03) in Bodoni Moda italic, very large
 - **Terminal demo:** Dark card showing live enrichment output with monospace lines
@@ -86,7 +86,7 @@
 ## Decisions Log
 | Date | Decision | Rationale |
 |------|----------|-----------|
-| 2026-04-21 | Renamed ProspectIQ → Lode | "Lode" = vein of ore. One syllable, premium, owns the mining/extraction metaphor. Completely distinctive in B2B intel space. |
+| 2026-04-21 | Renamed ProspectIQ → Seam | "Seam" = vein of ore running through rock. One syllable, premium, owns the extraction metaphor. Completely distinctive in B2B intel space. |
 | 2026-04-21 | Bodoni Moda editorial serif | Gallery-catalogue feel. Pairs with pieterkoopt.nl reference. Italic headlines create personality without needing color. |
 | 2026-04-21 | Warm dark #0C0B09 vs cool dark | Carbon/wood warmth vs slate coldness. Warmer = more premium, less generic SaaS. |
 | 2026-04-21 | Gold #C9A96E vs amber #F59E0B | Previous amber too saturated, startup-y. New gold reads as ore, precious metal, expertise. |

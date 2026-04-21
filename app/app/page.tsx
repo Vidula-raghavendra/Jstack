@@ -113,7 +113,7 @@ function exportToCSV(rows: Row[], pack: Pack) {
   const blob = new Blob([[cfg.headers.join(","), ...lines].join("\n")], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = `prospectiq-${pack}-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+  a.href = url; a.download = `seam-${pack}-${new Date().toISOString().slice(0,10)}.csv`; a.click();
   URL.revokeObjectURL(url);
 }
 
@@ -132,12 +132,12 @@ export default function AppPage() {
   const packCfg = PACKS.find(p => p.id === pack)!;
 
   useEffect(() => {
-    try { const s = localStorage.getItem("prospectiq-history"); if (s) setHistory(JSON.parse(s)); } catch { /* ignore */ }
+    try { const s = localStorage.getItem("seam-history"); if (s) setHistory(JSON.parse(s)); } catch { /* ignore */ }
   }, []);
 
   function saveHistory(newRows: Row[], domains: string[], runPack: Pack) {
     const entry: HistoryEntry = { id: crypto.randomUUID(), domains, results: newRows, runAt: new Date().toISOString(), pack: runPack };
-    setHistory(prev => { const updated = [entry, ...prev].slice(0, 20); localStorage.setItem("prospectiq-history", JSON.stringify(updated)); return updated; });
+    setHistory(prev => { const updated = [entry, ...prev].slice(0, 20); localStorage.setItem("seam-history", JSON.stringify(updated)); return updated; });
     setActiveHistoryId(entry.id);
   }
 
@@ -220,7 +220,7 @@ export default function AppPage() {
             style={{ borderColor: C.border, background: C.surface }}>
             <div className="flex items-center justify-between mb-3">
               <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9, color: C.dim }} className="uppercase tracking-[0.1em]">History</span>
-              <button onClick={() => { setHistory([]); localStorage.removeItem("prospectiq-history"); setActiveHistoryId(null); }}
+              <button onClick={() => { setHistory([]); localStorage.removeItem("seam-history"); setActiveHistoryId(null); }}
                 style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, color: C.dim }}
                 className="hover:text-[#B87E70] transition-colors">clear</button>
             </div>

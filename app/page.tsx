@@ -36,6 +36,17 @@ const E  = [0.16, 1, 0.3, 1] as [number, number, number, number];
 const SP = { type: "spring" as const, stiffness: 65, damping: 14 };
 
 /* ─────────────── CURSOR ─────────────── */
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+      style={{ fontFamily: "'Geist Mono', monospace", fontSize: 11, color: copied ? "#6A9970" : "#888", border: `1px solid ${copied ? "#6A9970" : "#333"}`, borderRadius: 6, padding: "6px 14px", background: "transparent", cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap" }}>
+      {copied ? "copied ✓" : "copy config"}
+    </button>
+  );
+}
+
 function Cursor() {
   const mx = useMotionValue(-200); const my = useMotionValue(-200);
   const rx = useMotionValue(-200); const ry = useMotionValue(-200);
@@ -1416,16 +1427,19 @@ export default function LandingPage() {
       "command": "npx",
       "args": [
         "mcp-remote",
-        "https://your.app/api/mcp"
+        "https://jstack-omega.vercel.app/api/mcp"
       ]
     }
   }
 }`}</pre>
-                <div className="px-6 py-4 border-t" style={{ borderColor: "#2A2520" }}>
-                  <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, color: "#666060" }} className="uppercase tracking-widest">$ then in claude</span>
-                  <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 13, color: "#A3C49A", marginTop: 6 }}>
-                    {">"} enrich stripe.com and linear.app with the SDR pack
+                <div className="px-6 py-4 border-t flex items-center justify-between gap-4" style={{ borderColor: "#2A2520" }}>
+                  <div>
+                    <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 10, color: "#666060" }} className="uppercase tracking-widest">$ then in claude</span>
+                    <div style={{ fontFamily: "'Geist Mono', monospace", fontSize: 13, color: "#A3C49A", marginTop: 6 }}>
+                      {">"} enrich stripe.com and linear.app with the SDR pack
+                    </div>
                   </div>
+                  <CopyButton text={`{\n  "mcpServers": {\n    "prospectiq": {\n      "command": "npx",\n      "args": [\n        "mcp-remote",\n        "https://jstack-omega.vercel.app/api/mcp"\n      ]\n    }\n  }\n}`} />
                 </div>
               </motion.div>
             </div>

@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "WebSight — AI Web Research",
+  title: "ProspectIQ — Company Intelligence, Stealth-Scraped",
   description:
-    "Real-time competitive intelligence powered by Hyperbrowser and Claude.",
+    "Paste domains, pick a pack. Get SDR, Recruiter, or VC signals in 60 seconds — streamed from Hyperbrowser's stealth crawler. MCP-native.",
 };
 
 export default function RootLayout({
@@ -28,6 +28,13 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <link rel="preconnect" href="https://api.fontshare.com" />
+        <link
+          rel="stylesheet"
+          href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,800,900&display=swap"
+        />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

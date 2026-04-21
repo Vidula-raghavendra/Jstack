@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ProspectIQ — Company Intelligence, Stealth-Scraped",
+  title: "Lode — Intelligence Runs Deep",
   description:
-    "Paste domains, pick a pack. Get SDR, Recruiter, or VC signals in 60 seconds — streamed from Hyperbrowser's stealth crawler. MCP-native.",
+    "Paste domains, pick a pack. Get SDR, Recruiter, or VC signals extracted in 60 seconds from Hyperbrowser's stealth crawler. MCP-native.",
 };
 
 export default function RootLayout({
@@ -29,10 +29,11 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
-        <link rel="preconnect" href="https://api.fontshare.com" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
           rel="stylesheet"
-          href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,800,900&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;1,6..96,400;1,6..96,700&family=Figtree:wght@300;400;500;600&display=swap"
         />
       </head>
       <body className="min-h-full flex flex-col">{children}</body>

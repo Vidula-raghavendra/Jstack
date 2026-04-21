@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lode — Intelligence Runs Deep",
+  title: "Seam — Intelligence Runs Deep",
   description:
     "Paste domains, pick a pack. Get SDR, Recruiter, or VC signals extracted in 60 seconds from Hyperbrowser's stealth crawler. MCP-native.",
 };

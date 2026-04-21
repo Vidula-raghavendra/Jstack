@@ -84,7 +84,7 @@ const DEMOS: { domain: string; pack: string; color: string; lines: Line[] }[] = 
   {
     domain: "stripe.com", pack: "SDR", color: C.gold,
     lines: [
-      { t:"cmd",    s:"$ lode enrich stripe.com --pack sdr" },
+      { t:"cmd",    s:"$ seam enrich stripe.com --pack sdr" },
       { t:"status", s:"opening stealth session..." },
       { t:"gap",    s:"" },
       { t:"key",    s:"COMPANY" },
@@ -105,7 +105,7 @@ const DEMOS: { domain: string; pack: string; color: string; lines: Line[] }[] = 
   {
     domain: "linear.app", pack: "Recruiter", color: C.indigo,
     lines: [
-      { t:"cmd",    s:"$ lode enrich linear.app --pack recruiter" },
+      { t:"cmd",    s:"$ seam enrich linear.app --pack recruiter" },
       { t:"status", s:"opening stealth session..." },
       { t:"gap",    s:"" },
       { t:"key",    s:"HIRING VELOCITY" },
@@ -126,7 +126,7 @@ const DEMOS: { domain: string; pack: string; color: string; lines: Line[] }[] = 
   {
     domain: "vercel.com", pack: "VC", color: C.sage,
     lines: [
-      { t:"cmd",    s:"$ lode enrich vercel.com --pack vc" },
+      { t:"cmd",    s:"$ seam enrich vercel.com --pack vc" },
       { t:"status", s:"opening stealth session..." },
       { t:"gap",    s:"" },
       { t:"key",    s:"FUNDING" },
@@ -148,7 +148,7 @@ const DEMOS: { domain: string; pack: string; color: string; lines: Line[] }[] = 
 
 const MCP_CONFIG = `{
   "mcpServers": {
-    "lode": {
+    "seam": {
       "command": "npx",
       "args": [
         "mcp-remote",
@@ -350,7 +350,7 @@ export default function Page() {
 
           <motion.a href="/" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
             style={{ fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, fontSize: 22, color: C.text, textDecoration: "none", display: "flex", alignItems: "center", gap: 2, letterSpacing: "-0.01em" }}>
-            Lode<span style={{ color: C.gold, fontSize: 10, lineHeight: 1, marginBottom: -6 }}>·</span>
+            Seam<span style={{ color: C.gold, fontSize: 10, lineHeight: 1, marginBottom: -6 }}>·</span>
           </motion.a>
 
           <motion.div className="hidden md:flex items-center gap-8"
@@ -594,7 +594,7 @@ export default function Page() {
                 initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} transition={{ duration: 0.7, delay: 0.15 }}
                 style={{ fontFamily: SANS, fontWeight: 300, fontSize: 16, color: C.muted, lineHeight: 1.85, marginBottom: 24 }}>
-                Lode ships as a JSON-RPC 2.0 MCP server at{" "}
+                Seam ships as a JSON-RPC 2.0 MCP server at{" "}
                 <code style={{ fontFamily: MONO, fontSize: 11.5, color: C.text, background: C.surfaceHi, padding: "2px 6px", borderRadius: 3, border: `1px solid ${C.border}` }}>/api/mcp</code>.
                 Add one config block. Call{" "}
                 <code style={{ fontFamily: MONO, fontSize: 11.5, color: C.text, background: C.surfaceHi, padding: "2px 6px", borderRadius: 3, border: `1px solid ${C.border}` }}>enrich_companies</code>{" "}
@@ -633,7 +633,7 @@ export default function Page() {
               <pre style={{ fontFamily: MONO, fontSize: 12, lineHeight: 1.8, color: "#BDB8AA", padding: "22px 26px", margin: 0, overflow: "auto" }}>
                 <span style={{ color: C.dim }}>{"{"}</span>{"\n"}
                 {"  "}<span style={{ color: C.indigo }}>&quot;mcpServers&quot;</span><span style={{ color: C.dim }}>: {"{"}</span>{"\n"}
-                {"    "}<span style={{ color: C.indigo }}>&quot;lode&quot;</span><span style={{ color: C.dim }}>: {"{"}</span>{"\n"}
+                {"    "}<span style={{ color: C.indigo }}>&quot;seam&quot;</span><span style={{ color: C.dim }}>: {"{"}</span>{"\n"}
                 {"      "}<span style={{ color: "#7A9C6A" }}>&quot;command&quot;</span><span style={{ color: C.dim }}>:</span>{" "}<span style={{ color: C.gold }}>&quot;npx&quot;</span><span style={{ color: C.dim }}>,</span>{"\n"}
                 {"      "}<span style={{ color: "#7A9C6A" }}>&quot;args&quot;</span><span style={{ color: C.dim }}>: [</span>{"\n"}
                 {"        "}<span style={{ color: C.gold }}>&quot;mcp-remote&quot;</span><span style={{ color: C.dim }}>,</span>{"\n"}
@@ -693,7 +693,7 @@ export default function Page() {
               style={{ fontFamily: SANS, fontWeight: 600, fontSize: 16, color: C.bg, background: C.gold, padding: "15px 40px", borderRadius: 4, textDecoration: "none", display: "inline-block", transition: "all 0.15s" }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; (e.currentTarget as HTMLElement).style.boxShadow = `0 16px 48px ${C.goldGlow}`; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ""; (e.currentTarget as HTMLElement).style.boxShadow = ""; }}>
-              Open Lode — free
+              Open Seam — free
             </motion.a>
           </div>
         </section>
@@ -702,7 +702,7 @@ export default function Page() {
         <footer className="py-10 border-t" style={{ borderColor: C.border }}>
           <div className="max-w-[1200px] mx-auto px-8 lg:px-14 flex flex-col md:flex-row items-center justify-between gap-4">
             <span style={{ fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, fontSize: 18, color: C.text, letterSpacing: "-0.01em" }}>
-              Lode<span style={{ color: C.gold }}>·</span>
+              Seam<span style={{ color: C.gold }}>·</span>
             </span>
             <div className="flex items-center gap-2">
               <span className="w-1 h-1 rounded-full" style={{ background: C.gold, opacity: 0.6 }} />

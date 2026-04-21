@@ -3,7 +3,7 @@ import { enrichForMcp, type Pack } from "../enrich/route";
 export const maxDuration = 300;
 
 const SERVER_INFO = {
-  name: "prospectiq",
+  name: "seam",
   version: "0.2.0",
   protocolVersion: "2025-03-26",
 };
@@ -131,13 +131,13 @@ export async function GET() {
   return Response.json({
     server: SERVER_INFO,
     description:
-      "ProspectIQ MCP server — agentic GTM intelligence on Hyperbrowser. POST JSON-RPC 2.0 to this endpoint. Methods: initialize, tools/list, tools/call.",
+      "Seam MCP server — agentic GTM intelligence on Hyperbrowser. POST JSON-RPC 2.0 to this endpoint. Methods: initialize, tools/list, tools/call.",
     tools: TOOLS.map((t) => ({ name: t.name, description: t.description })),
     packs: PACKS_DOC,
     usage: {
       curl: `curl -X POST $URL -H 'content-type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"enrich_companies","arguments":{"domains":["stripe.com"],"pack":"sdr"}}}'`,
       claudeDesktop:
-        "Add via mcp-remote: { \"prospectiq\": { \"command\": \"npx\", \"args\": [\"mcp-remote\", \"$URL\"] } }",
+        "Add via mcp-remote: { \"seam\": { \"command\": \"npx\", \"args\": [\"mcp-remote\", \"$URL\"] } }",
     },
   });
 }

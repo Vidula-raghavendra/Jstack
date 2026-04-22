@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import type { CompanyProfile, EnrichResult, Pack } from "../api/enrich/route";
+import type { CompanyProfile, EnrichResult, Pack, VisualIntel } from "../api/enrich/route";
 
 /* ─── Seam app tokens — warm light bg + gold/green accents ─── */
 const SERIF = "'Bodoni Moda', Georgia, serif";
@@ -35,6 +35,7 @@ interface Row {
   domain: string;
   state: RowState;
   profile?: CompanyProfile;
+  visualIntel?: VisualIntel;
   error?: string;
   scrapedAt?: string;
   currentStep?: string;
@@ -223,7 +224,7 @@ export default function AppPage() {
             finalRows = finalRows.map(r => r.domain === payload.domain ? { ...r, currentStep: payload.step, stepIndex: payload.stepIndex, stepTotal: payload.total } : r);
             setRows([...finalRows]);
           } else if (payload.event === "result") {
-            finalRows = finalRows.map(r => r.domain === payload.domain ? { ...r, state: payload.status === "ok" ? "ok" : "error", profile: payload.profile, error: payload.error, scrapedAt: payload.scrapedAt, currentStep: undefined } : r);
+            finalRows = finalRows.map(r => r.domain === payload.domain ? { ...r, state: payload.status === "ok" ? "ok" : "error", profile: payload.profile, visualIntel: payload.visualIntel, error: payload.error, scrapedAt: payload.scrapedAt, currentStep: undefined } : r);
             setRows([...finalRows]);
           } else if (payload.event === "done") { saveHistory(finalRows, domains, runPack); }
         }
@@ -400,7 +401,7 @@ export default function AppPage() {
           <AnimatePresence initial={false}>
             <div className="space-y-2">
               {filteredRows.map((row, i) => (
-                <CompanyCard key={row.domain} row={row} index={i} expanded={expanded.has(row.domain)} onToggle={() => toggleExpand(row.domain)} pack={pack} />
+                <CompanyCard key={row.domain} row={row} index={i} expanded={expanded.has(row.domain)} onToggle={() => toggleExpand(row.domain)} pack={pack} visualIntel={row.visualIntel} />
               ))}
             </div>
           </AnimatePresence>
@@ -422,7 +423,7 @@ export default function AppPage() {
   );
 }
 
-function CompanyCard({ row, expanded, onToggle, index = 0, pack }: { row: Row; expanded: boolean; onToggle: () => void; index?: number; pack: Pack }) {
+function CompanyCard({ row, expanded, onToggle, index = 0, pack, visualIntel }: { row: Row; expanded: boolean; onToggle: () => void; index?: number; pack: Pack; visualIntel?: VisualIntel }) {
   const { domain, state, profile, error } = row;
   const vel = profile ? VELOCITY_CONFIG[profile.hiringVelocity] ?? VELOCITY_CONFIG.none : null;
   const velColor = profile ? VEL_COLORS[profile.hiringVelocity] ?? C.dim : C.dim;
@@ -539,6 +540,108 @@ function CompanyCard({ row, expanded, onToggle, index = 0, pack }: { row: Row; e
               </div>
             </div>
           )}
+          {/* Visual Intel — only shown when Anthropic key is set and screenshot was captured */}
+          {visualIntel && visualIntel.visualSignals.length > 0 && (
+            <div className="lg:col-span-3 rounded-xl px-4 py-3.5 relative overflow-hidden"
+              style={{ background: "rgba(139,144,200,0.06)", border: "1px solid rgba(139,144,200,0.20)" }}>
+              <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl" style={{ background: C.indigo }} />
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span style={{ fontFamily: MONO, fontSize: 9, color: C.indigo }} className="uppercase tracking-[0.15em]">Visual Intel</span>
+                  <span style={{ fontFamily: MONO, fontSize: 8, color: C.dim, background: "rgba(139,144,200,0.10)", border: "1px solid rgba(139,144,200,0.20)", borderRadius: 4, padding: "2px 6px" }}>
+                    Claude Opus · {pack === "sdr" ? "Pricing page" : pack === "recruiter" ? "Careers page" : "Homepage"}
+                  </span>
+                </div>
+                <span style={{ fontFamily: MONO, fontSize: 8, color: C.dim }}>screenshot analysis</span>
+              </div>
+
+              {/* Pack-specific visual fields */}
+              {pack === "sdr" && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                  {visualIntel.pricingTiers.length > 0 && (
+                    <div>
+                      <p style={{ fontFamily: MONO, fontSize: 8, color: C.dim }} className="uppercase tracking-[0.1em] mb-1">Tiers</p>
+                      <p style={{ fontSize: 11, color: C.text }}>{visualIntel.pricingTiers.join(", ")}</p>
+                    </div>
+                  )}
+                  {visualIntel.pricesVisible.length > 0 && (
+                    <div>
+                      <p style={{ fontFamily: MONO, fontSize: 8, color: C.dim }} className="uppercase tracking-[0.1em] mb-1">Prices</p>
+                      <p style={{ fontSize: 11, color: C.text }}>{visualIntel.pricesVisible.join(", ")}</p>
+                    </div>
+                  )}
+                  <div>
+                    <p style={{ fontFamily: MONO, fontSize: 8, color: C.dim }} className="uppercase tracking-[0.1em] mb-1">Talk to Sales CTA</p>
+                    <p style={{ fontSize: 11, color: visualIntel.hasTalkToSales ? C.gold : C.muted }}>{visualIntel.hasTalkToSales ? "Yes" : "No"}</p>
+                  </div>
+                  <div>
+                    <p style={{ fontFamily: MONO, fontSize: 8, color: C.dim }} className="uppercase tracking-[0.1em] mb-1">Free Trial</p>
+                    <p style={{ fontSize: 11, color: visualIntel.hasFreeTrial ? C.sage : C.muted }}>{visualIntel.hasFreeTrial ? "Yes" : "No"}</p>
+                  </div>
+                </div>
+              )}
+
+              {pack === "recruiter" && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
+                  {visualIntel.departmentsHiring.length > 0 && (
+                    <div>
+                      <p style={{ fontFamily: MONO, fontSize: 8, color: C.dim }} className="uppercase tracking-[0.1em] mb-1">Departments hiring</p>
+                      <p style={{ fontSize: 11, color: C.text }}>{visualIntel.departmentsHiring.join(", ")}</p>
+                    </div>
+                  )}
+                  {visualIntel.officeLocations.length > 0 && (
+                    <div>
+                      <p style={{ fontFamily: MONO, fontSize: 8, color: C.dim }} className="uppercase tracking-[0.1em] mb-1">Locations</p>
+                      <p style={{ fontSize: 11, color: C.text }}>{visualIntel.officeLocations.join(", ")}</p>
+                    </div>
+                  )}
+                  {visualIntel.benefitsVisible.length > 0 && (
+                    <div>
+                      <p style={{ fontFamily: MONO, fontSize: 8, color: C.dim }} className="uppercase tracking-[0.1em] mb-1">Benefits visible</p>
+                      <p style={{ fontSize: 11, color: C.text }}>{visualIntel.benefitsVisible.slice(0, 3).join(", ")}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {pack === "vc" && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                  {visualIntel.customerLogoCount > 0 && (
+                    <div>
+                      <p style={{ fontFamily: MONO, fontSize: 8, color: C.dim }} className="uppercase tracking-[0.1em] mb-1">Customer logos</p>
+                      <p style={{ fontSize: 11, color: C.text }}>{visualIntel.customerLogoCount} visible</p>
+                    </div>
+                  )}
+                  {visualIntel.metricsBanners.length > 0 && (
+                    <div className="col-span-2">
+                      <p style={{ fontFamily: MONO, fontSize: 8, color: C.dim }} className="uppercase tracking-[0.1em] mb-1">Metrics on page</p>
+                      <p style={{ fontSize: 11, color: C.sage }}>{visualIntel.metricsBanners.join(" · ")}</p>
+                    </div>
+                  )}
+                  {visualIntel.pressLogos.length > 0 && (
+                    <div>
+                      <p style={{ fontFamily: MONO, fontSize: 8, color: C.dim }} className="uppercase tracking-[0.1em] mb-1">Press</p>
+                      <p style={{ fontSize: 11, color: C.text }}>{visualIntel.pressLogos.join(", ")}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Visual signals — the things only the screenshot could catch */}
+              <ul className="space-y-1.5">
+                {visualIntel.visualSignals.map((s, i) => (
+                  <motion.li key={i}
+                    initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.04, duration: 0.35 }}
+                    className="flex items-start gap-2">
+                    <span style={{ color: C.indigo, fontSize: 14, lineHeight: 1.2, flexShrink: 0 }}>›</span>
+                    <span style={{ fontSize: 11, color: C.muted, lineHeight: 1.55 }}>{s}</span>
+                  </motion.li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {profile.techStack.length > 0 && (
             <div>
               <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim }} className="uppercase tracking-[0.1em] mb-2">Full Tech Stack</p>

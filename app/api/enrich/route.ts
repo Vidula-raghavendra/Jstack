@@ -1,9 +1,11 @@
 import { Hyperbrowser } from "@hyperbrowser/sdk";
 import { z } from "zod";
 
-export const maxDuration = 120;
+export const maxDuration = 300;
 
-const hb = new Hyperbrowser({ apiKey: process.env.HYPERBROWSER_API_KEY! });
+const apiKey = process.env.HYPERBROWSER_API_KEY;
+if (!apiKey) throw new Error("HYPERBROWSER_API_KEY is not set");
+const hb = new Hyperbrowser({ apiKey });
 
 export type Pack = "sdr" | "recruiter" | "vc";
 
@@ -127,15 +129,47 @@ if no signal at all.`,
   }
 }
 
+// Validates that a string looks like a real domain (e.g. stripe.com, sub.domain.io)
+function isValidDomain(s: string): boolean {
+  return /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$/i.test(s) && s.length <= 253;
+}
+
+// Strips internal SDK error details before sending to the client
+function sanitizeError(msg: string): string {
+  if (/rate.?limit|concurrent|quota|429/i.test(msg)) {
+    return "Rate limit — free tier allows one session at a time. Wait a moment and retry.";
+  }
+  if (/api.?key|unauthorized|401|403/i.test(msg)) {
+    return "Service configuration error. Please try again later.";
+  }
+  // Return first sentence only — truncate anything that looks like a stack trace
+  return msg.split(/\n|at\s/)[0].trim().slice(0, 200);
+}
+
 export async function POST(request: Request) {
-  const { domains, pack } = await request.json();
+  let body: { domains?: unknown; pack?: unknown };
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const { domains, pack } = body;
   const selectedPack: Pack = pack === "recruiter" || pack === "vc" ? pack : "sdr";
 
   if (!Array.isArray(domains) || domains.length === 0) {
     return Response.json({ error: "domains array required" }, { status: 400 });
   }
 
-  const list: string[] = domains.slice(0, 10);
+  const list: string[] = (domains as unknown[])
+    .filter((d): d is string => typeof d === "string")
+    .map(d => d.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/$/, "").split("/")[0])
+    .filter(isValidDomain)
+    .slice(0, 10);
+
+  if (list.length === 0) {
+    return Response.json({ error: "No valid domains provided" }, { status: 400 });
+  }
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
@@ -177,13 +211,9 @@ export async function POST(request: Request) {
           send({ event: "result", ...result });
         } catch (err) {
           stepCancelled = true;
-          const msg = String(err);
-          const isRateLimit = /rate.?limit|concurrent|quota|429/i.test(msg);
           send({
             event: "result", domain, status: "error", pack: selectedPack,
-            error: isRateLimit
-              ? "Rate limit — free tier allows one session at a time. Wait a moment and retry."
-              : msg,
+            error: sanitizeError(String(err)),
           });
         }
       }

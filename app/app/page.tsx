@@ -210,7 +210,12 @@ export default function AppPage() {
         buf += dec.decode(value, { stream: true }); const lines = buf.split("\n"); buf = lines.pop() ?? "";
         for (const line of lines) {
           if (!line.startsWith("data: ")) continue;
-          const payload = JSON.parse(line.slice(6)) as EnrichResult & { event: string };
+          type StreamEvent =
+            | { event: "started"; domain: string }
+            | { event: "step"; domain: string; step: string; stepIndex: number; total: number }
+            | (EnrichResult & { event: "result" })
+            | { event: "done" };
+          const payload = JSON.parse(line.slice(6)) as StreamEvent;
           if (payload.event === "started") {
             finalRows = finalRows.map(r => r.domain === payload.domain ? { ...r, state: "loading", startedAt: Date.now() } : r);
             setRows([...finalRows]);

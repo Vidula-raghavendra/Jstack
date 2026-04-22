@@ -36,6 +36,7 @@ interface Row {
   state: RowState;
   profile?: CompanyProfile;
   visualIntel?: VisualIntel;
+  agentLiveUrl?: string;
   error?: string;
   scrapedAt?: string;
   currentStep?: string;
@@ -214,6 +215,7 @@ export default function AppPage() {
           type StreamEvent =
             | { event: "started"; domain: string }
             | { event: "step"; domain: string; step: string; stepIndex: number; total: number }
+            | { event: "liveUrl"; domain: string; liveUrl: string }
             | (EnrichResult & { event: "result" })
             | { event: "done" };
           const payload = JSON.parse(line.slice(6)) as StreamEvent;
@@ -223,8 +225,11 @@ export default function AppPage() {
           } else if (payload.event === "step") {
             finalRows = finalRows.map(r => r.domain === payload.domain ? { ...r, currentStep: payload.step, stepIndex: payload.stepIndex, stepTotal: payload.total } : r);
             setRows([...finalRows]);
+          } else if (payload.event === "liveUrl") {
+            finalRows = finalRows.map(r => r.domain === payload.domain ? { ...r, agentLiveUrl: payload.liveUrl } : r);
+            setRows([...finalRows]);
           } else if (payload.event === "result") {
-            finalRows = finalRows.map(r => r.domain === payload.domain ? { ...r, state: payload.status === "ok" ? "ok" : "error", profile: payload.profile, visualIntel: payload.visualIntel, error: payload.error, scrapedAt: payload.scrapedAt, currentStep: undefined } : r);
+            finalRows = finalRows.map(r => r.domain === payload.domain ? { ...r, state: payload.status === "ok" ? "ok" : "error", profile: payload.profile, visualIntel: payload.visualIntel, agentLiveUrl: payload.agentLiveUrl ?? r.agentLiveUrl, error: payload.error, scrapedAt: payload.scrapedAt, currentStep: undefined } : r);
             setRows([...finalRows]);
           } else if (payload.event === "done") { saveHistory(finalRows, domains, runPack); }
         }
@@ -444,6 +449,31 @@ function CompanyCard({ row, expanded, onToggle, index = 0, pack, visualIntel }: 
           animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.5, repeat: Infinity }} />
       )}
 
+      {/* Live agent browser feed — shown while agent is navigating */}
+      {state === "loading" && row.agentLiveUrl && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 220 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full overflow-hidden"
+          style={{ borderBottom: `1px solid ${C.border}` }}>
+          <div className="relative w-full h-full">
+            <div className="absolute top-2 left-3 z-10 flex items-center gap-2">
+              <motion.span className="w-[5px] h-[5px] rounded-full" style={{ background: C.gold }}
+                animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1, repeat: Infinity }} />
+              <span style={{ fontFamily: MONO, fontSize: 9, color: C.gold, background: "rgba(12,11,9,0.85)", padding: "2px 6px", borderRadius: 4 }}>
+                Live Agent Feed
+              </span>
+            </div>
+            <iframe
+              src={row.agentLiveUrl}
+              style={{ width: "100%", height: "100%", border: "none", filter: "brightness(0.95)" }}
+              title="Live browser agent session"
+              sandbox="allow-scripts allow-same-origin"
+            />
+          </div>
+        </motion.div>
+      )}
+
       <button onClick={onToggle} disabled={state === "pending" || state === "loading"}
         className="w-full flex items-center gap-3 px-4 py-3.5 text-left transition-colors disabled:cursor-default"
         style={{ background: "transparent" }}
@@ -487,6 +517,24 @@ function CompanyCard({ row, expanded, onToggle, index = 0, pack, visualIntel }: 
 
         {state === "ok" && <span style={{ color: C.dim, fontSize: 10 }} className="shrink-0">{expanded ? "▲" : "▼"}</span>}
       </button>
+
+      {expanded && state === "ok" && row.agentLiveUrl && (
+        <div className="border-t" style={{ borderColor: C.border }}>
+          <div style={{ height: 260, position: "relative", overflow: "hidden" }}>
+            <div className="absolute top-2 left-3 z-10 flex items-center gap-2">
+              <span style={{ fontFamily: MONO, fontSize: 9, color: C.muted, background: "rgba(12,11,9,0.85)", padding: "2px 6px", borderRadius: 4, border: `1px solid ${C.border}` }}>
+                Agent replay · {domain}
+              </span>
+            </div>
+            <iframe
+              src={row.agentLiveUrl}
+              style={{ width: "100%", height: "100%", border: "none", filter: "brightness(0.85) saturate(0.9)" }}
+              title="Agent session replay"
+              sandbox="allow-scripts allow-same-origin"
+            />
+          </div>
+        </div>
+      )}
 
       {expanded && state === "ok" && profile && (
         <div className="border-t px-4 py-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 text-[12px]"

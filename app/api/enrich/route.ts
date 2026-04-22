@@ -148,6 +148,7 @@ export interface EnrichResult {
   pack?: Pack;
   profile?: CompanyProfile;
   visualIntel?: VisualIntel;
+  agentLiveUrl?: string;
   error?: string;
   scrapedAt?: string;
 }
@@ -193,58 +194,106 @@ async function captureVisualIntel(domain: string, pack: Pack): Promise<VisualInt
   }
 }
 
+const AGENT_TASKS: Record<Pack, (domain: string) => string> = {
+  sdr: (d) => `You are a B2B sales analyst researching ${d} for outbound sales intelligence.
+Navigate their website autonomously. Your goal:
+1. Go to the homepage — note the hero message, value proposition, and any customer logos
+2. Navigate to /pricing or find the pricing link — record every tier name, price point, and "Talk to Sales" CTAs
+3. Find the customers or case studies page — collect every named customer logo or company mention
+4. Check the blog for the 3 most recent posts — extract titles and dates as evidence of recent activity
+5. Find /about or /team — collect every founder, VP, Director, or Head-level person with their full title
+Return a detailed research report with all findings.`,
+
+  recruiter: (d) => `You are a technical recruiter researching ${d} for hiring intelligence.
+Navigate their website autonomously. Your goal:
+1. Find the careers or jobs page — list every open role with title, team, and location
+2. Click into 3-5 job postings — extract every technology, language, framework, and cloud mentioned
+3. Find the engineering blog if one exists — what topics do they write about?
+4. Find the /about or /team page — identify engineering leaders and hiring managers
+5. Note any public headcount signals (team size, "we are X people", LinkedIn employee count if shown)
+Return a detailed research report with all findings.`,
+
+  vc: (d) => `You are a VC analyst doing investment due diligence on ${d}.
+Navigate their website autonomously. Your goal:
+1. Homepage — capture the value prop, any metrics banners (users, revenue, growth stats), and press logos
+2. Find /press, /news, or /investors — look for funding announcements with investor names and round sizes
+3. Find /about or /team — identify founders and where they previously worked (company pedigree)
+4. Find /customers or /case-studies — collect customer logos and any ARR/usage statistics mentioned
+5. Note any partnership announcements, enterprise customers, or geographic expansion signals
+Return a detailed research report with all findings.`,
+};
+
 /* ── Main enrichment ─────────────────────────────────────────────────── */
-async function enrichDomain(domain: string, pack: Pack): Promise<EnrichResult> {
+async function enrichDomain(domain: string, pack: Pack, onLiveUrl?: (url: string) => void): Promise<EnrichResult> {
   const clean = domain.replace(/^https?:\/\//, "").replace(/\/$/, "");
   const cfg = PACK_CONFIG[pack];
 
-  const baseUrls = [
-    `https://${clean}`,
-    `https://${clean}/careers`,
-    `https://${clean}/jobs`,
-    `https://${clean}/about`,
-    `https://${clean}/team`,
-    `https://${clean}/leadership`,
-  ];
+  // Start the autonomous browser agent
+  const agentJob = await hb.agents.browserUse.start({
+    task: AGENT_TASKS[pack](clean),
+    sessionOptions: { useStealth: true },
+    useVision: true,
+    maxSteps: 20,
+  });
 
-  // Run text extraction and visual screenshot in parallel
-  const [result, visualIntel] = await Promise.all([
-    hb.extract.startAndWait({
-      urls: [...baseUrls, ...cfg.extraUrls(clean)],
-      prompt: `Extract a comprehensive company intelligence profile.
+  // Stream the live URL back immediately so UI can show live browser feed
+  if (agentJob.liveUrl && onLiveUrl) onLiveUrl(agentJob.liveUrl);
 
-${cfg.focus}
+  // Poll agent to completion while visual screenshot runs in parallel
+  async function pollAgent() {
+    let result = await hb.agents.browserUse.get(agentJob.jobId);
+    while (result.status === "running" || result.status === "pending") {
+      await new Promise(r => setTimeout(r, 3000));
+      result = await hb.agents.browserUse.get(agentJob.jobId);
+    }
+    return result;
+  }
 
-For the "people" field: collect every person currently working at the company that
-is listed on the team/about/leadership/contact pages. Include name (required), role,
-the FULL LinkedIn profile URL if publicly linked, public email if explicitly shown,
-public Twitter/X if linked. Do NOT invent or guess emails or LinkedIn URLs.
-
-For the "signals" field: populate ALL three arrays (buying, hiring, investment) with
-3-6 concrete, specific items each. These should be actionable — not vague. Bad: "they
-are growing." Good: "Hiring 5 senior infra engineers with explicit Kubernetes + Rust
-experience, suggesting platform rewrite."
-
-For "pricingModel": infer from pricing page if accessible; default to "unknown" only
-if no signal at all.`,
-      schema: CompanyProfileSchema,
-      sessionOptions: { useStealth: true },
-    }),
+  const [agentResult, visualIntel] = await Promise.all([
+    pollAgent(),
     captureVisualIntel(clean, pack),
   ]);
 
-  if (result.status !== "completed" || !result.data) {
-    return { domain: clean, status: "error", pack, error: result.error ?? "Extract failed" };
+  if (agentResult.status !== "completed" || !agentResult.data?.finalResult) {
+    return { domain: clean, status: "error", pack, error: agentResult.error ?? "Agent task failed" };
   }
 
+  // Parse the agent's free-text research report into structured profile via Claude
+  if (!claude) {
+    return { domain: clean, status: "error", pack, error: "ANTHROPIC_API_KEY required for structured extraction" };
+  }
+
+  const structureResponse = await claude.messages.create({
+    model: "claude-opus-4-7-20251101",
+    max_tokens: 4096,
+    messages: [{
+      role: "user",
+      content: `You are given a raw research report from an autonomous web agent that browsed ${clean}.
+Extract it into the exact JSON schema below. Be specific and literal — only include facts from the report, never hallucinate.
+
+${cfg.focus}
+
+Research report:
+${agentResult.data.finalResult}
+
+Return ONLY valid JSON matching this TypeScript schema:
+${JSON.stringify(CompanyProfileSchema.shape, null, 2)}`,
+    }],
+  });
+
+  const text = structureResponse.content[0].type === "text" ? structureResponse.content[0].text : "";
+  const clean2 = text.replace(/^```(?:json)?\n?/m, "").replace(/\n?```$/m, "").trim();
+
   try {
-    const profile = CompanyProfileSchema.parse(result.data);
+    const parsed = JSON.parse(clean2);
+    const profile = CompanyProfileSchema.parse(parsed);
     return {
       domain: clean,
       status: "ok",
       pack,
       profile,
       visualIntel: visualIntel ?? undefined,
+      agentLiveUrl: agentJob.liveUrl ?? undefined,
       scrapedAt: new Date().toISOString(),
     };
   } catch {
@@ -312,7 +361,9 @@ export async function POST(request: Request) {
         })();
 
         try {
-          const result = await enrichDomain(domain, selectedPack);
+          const result = await enrichDomain(domain, selectedPack, (liveUrl) => {
+            send({ event: "liveUrl", domain, liveUrl });
+          });
           stepCancelled = true;
           void stepLoop;
           send({ event: "result", ...result });

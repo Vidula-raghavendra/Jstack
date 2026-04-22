@@ -143,13 +143,48 @@ export async function POST(request: Request) {
       const send = (data: object) =>
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
 
+      const STEPS = [
+        "Opening stealth browser session",
+        "Bypassing bot detection",
+        "Loading homepage",
+        "Discovering linked pages",
+        "Navigating to pricing page",
+        "Scanning careers & job posts",
+        "Reading team & about pages",
+        "Extracting structured signals",
+        "Running AI analysis",
+        "Validating & formatting results",
+      ];
+      const STEP_MS = [0, 2000, 5000, 9000, 14000, 20000, 27000, 34000, 44000, 56000];
+
       for (const domain of list) {
         send({ event: "started", domain });
+
+        // Stream step events concurrently alongside the blocking scrape
+        let stepCancelled = false;
+        const stepLoop = (async () => {
+          for (let i = 0; i < STEPS.length; i++) {
+            if (stepCancelled) break;
+            if (i > 0) await new Promise<void>(r => setTimeout(r, STEP_MS[i] - STEP_MS[i - 1]));
+            if (!stepCancelled) send({ event: "step", domain, step: STEPS[i], stepIndex: i, total: STEPS.length });
+          }
+        })();
+
         try {
           const result = await enrichDomain(domain, selectedPack);
+          stepCancelled = true;
+          void stepLoop;
           send({ event: "result", ...result });
         } catch (err) {
-          send({ event: "result", domain, status: "error", pack: selectedPack, error: String(err) });
+          stepCancelled = true;
+          const msg = String(err);
+          const isRateLimit = /rate.?limit|concurrent|quota|429/i.test(msg);
+          send({
+            event: "result", domain, status: "error", pack: selectedPack,
+            error: isRateLimit
+              ? "Rate limit — free tier allows one session at a time. Wait a moment and retry."
+              : msg,
+          });
         }
       }
 

@@ -37,6 +37,10 @@ interface Row {
   profile?: CompanyProfile;
   error?: string;
   scrapedAt?: string;
+  currentStep?: string;
+  stepIndex?: number;
+  stepTotal?: number;
+  startedAt?: number;
 }
 
 interface HistoryEntry {
@@ -72,6 +76,39 @@ const VEL_COLORS: Record<string, string> = {
   steady:     C.sage,
   aggressive: C.green,
 };
+
+function LiveProgress({ row }: { row: Row }) {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    if (!row.startedAt) return;
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - row.startedAt!) / 1000)), 500);
+    return () => clearInterval(id);
+  }, [row.startedAt]);
+
+  const progress = row.stepTotal && row.stepIndex != null
+    ? Math.round(((row.stepIndex + 1) / row.stepTotal) * 100)
+    : 0;
+
+  return (
+    <div style={{ fontFamily: MONO, fontSize: 11 }} className="flex flex-col gap-1.5 w-full">
+      <div className="flex items-center gap-2">
+        <motion.span className="w-[5px] h-[5px] rounded-full shrink-0"
+          style={{ background: C.gold }} animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1, repeat: Infinity }} />
+        <span style={{ color: C.gold, fontSize: 11 }} className="truncate">{row.currentStep ?? "Opening session..."}</span>
+        <span style={{ color: C.dim, fontSize: 10, marginLeft: "auto", flexShrink: 0 }}>{elapsed}s</span>
+      </div>
+      {progress > 0 && (
+        <div style={{ height: 2, background: C.border, borderRadius: 1, overflow: "hidden" }}>
+          <motion.div
+            initial={{ width: "0%" }}
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            style={{ height: "100%", background: C.gold, borderRadius: 1 }} />
+        </div>
+      )}
+    </div>
+  );
+}
 
 function SignalBars({ velocity }: { velocity: string }) {
   const bars = VELOCITY_CONFIG[velocity]?.bars ?? 0;
@@ -174,9 +211,16 @@ export default function AppPage() {
         for (const line of lines) {
           if (!line.startsWith("data: ")) continue;
           const payload = JSON.parse(line.slice(6)) as EnrichResult & { event: string };
-          if (payload.event === "started") { finalRows = finalRows.map(r => r.domain === payload.domain ? { ...r, state: "loading" } : r); setRows([...finalRows]); }
-          else if (payload.event === "result") { finalRows = finalRows.map(r => r.domain === payload.domain ? { ...r, state: payload.status === "ok" ? "ok" : "error", profile: payload.profile, error: payload.error, scrapedAt: payload.scrapedAt } : r); setRows([...finalRows]); }
-          else if (payload.event === "done") { saveHistory(finalRows, domains, runPack); }
+          if (payload.event === "started") {
+            finalRows = finalRows.map(r => r.domain === payload.domain ? { ...r, state: "loading", startedAt: Date.now() } : r);
+            setRows([...finalRows]);
+          } else if (payload.event === "step") {
+            finalRows = finalRows.map(r => r.domain === payload.domain ? { ...r, currentStep: payload.step, stepIndex: payload.stepIndex, stepTotal: payload.total } : r);
+            setRows([...finalRows]);
+          } else if (payload.event === "result") {
+            finalRows = finalRows.map(r => r.domain === payload.domain ? { ...r, state: payload.status === "ok" ? "ok" : "error", profile: payload.profile, error: payload.error, scrapedAt: payload.scrapedAt, currentStep: undefined } : r);
+            setRows([...finalRows]);
+          } else if (payload.event === "done") { saveHistory(finalRows, domains, runPack); }
         }
       }
     } catch (e) { if ((e as Error).name !== "AbortError") console.error(e); }
@@ -302,20 +346,28 @@ export default function AppPage() {
               </div>
             </form>
 
-            <div className="flex flex-wrap gap-2 items-center">
-              <span style={{ fontFamily: MONO, fontSize: 10, color: C.dim }}>Quick add:</span>
-              {PACK_PRESETS[pack].map(d => (
-                <button key={d} type="button"
-                  style={{ fontFamily: MONO, fontSize: 11, color: C.muted, background: C.card, border: `1px solid ${C.border}` }}
-                  onClick={() => setInput(p => { const ex = parseDomains(p); if (ex.includes(d)) return p; return p ? `${p.trim()}\n${d}` : d; })}
-                  className="px-3 py-1 rounded-full transition-all"
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = packCfg.accent; (e.currentTarget as HTMLElement).style.color = packCfg.accent; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border; (e.currentTarget as HTMLElement).style.color = C.muted; }}>
-                  + {d}
-                </button>
-              ))}
+            <div className="flex flex-wrap gap-2 items-center justify-between">
+              <div className="flex flex-wrap gap-2 items-center">
+                <span style={{ fontFamily: MONO, fontSize: 10, color: C.dim }}>Quick add:</span>
+                {PACK_PRESETS[pack].map(d => (
+                  <button key={d} type="button"
+                    style={{ fontFamily: MONO, fontSize: 11, color: C.muted, background: C.card, border: `1px solid ${C.border}` }}
+                    onClick={() => setInput(p => { const ex = parseDomains(p); if (ex.includes(d)) return p; return p ? `${p.trim()}\n${d}` : d; })}
+                    className="px-3 py-1 rounded-full transition-all"
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = packCfg.accent; (e.currentTarget as HTMLElement).style.color = packCfg.accent; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = C.border; (e.currentTarget as HTMLElement).style.color = C.muted; }}>
+                    + {d}
+                  </button>
+                ))}
+              </div>
+              <a href="https://hyperbrowser.ai" target="_blank" rel="noopener"
+                style={{ fontFamily: MONO, fontSize: 10, color: C.dim, textDecoration: "none", letterSpacing: "0.08em", display: "flex", alignItems: "center", gap: 5 }}
+                onMouseEnter={e => (e.currentTarget.style.color = C.sage)}
+                onMouseLeave={e => (e.currentTarget.style.color = C.dim)}>
+                <span style={{ color: C.sage, fontSize: 8 }}>◆</span> POWERED BY HYPERBROWSER
+              </a>
             </div>
-          </div>
+          </div>{/* end space-y-3 */}
 
           {/* Filter/sort */}
           {rows.length > 0 && (
@@ -414,13 +466,8 @@ function CompanyCard({ row, expanded, onToggle, index = 0, pack }: { row: Row; e
 
         {profile && <span style={{ fontFamily: MONO, fontSize: 11, color: C.muted }} className="shrink-0 hidden sm:block">{profile.openRoles.length} role{profile.openRoles.length !== 1 ? "s" : ""}</span>}
 
-        <div className="shrink-0 w-36 flex justify-end">
-          {state === "loading" && (
-            <span style={{ fontFamily: MONO, fontSize: 10, color: C.gold }} className="flex items-center gap-1.5">
-              <motion.span className="w-[4px] h-[4px] rounded-full inline-block" style={{ background: C.gold }}
-                animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 1, repeat: Infinity }} />scraping
-            </span>
-          )}
+        <div className={`flex justify-end ${state === "loading" ? "flex-1 min-w-0 ml-2" : "shrink-0 w-36"}`}>
+          {state === "loading" && <LiveProgress row={row} />}
           {state === "pending" && <span style={{ fontFamily: MONO, fontSize: 10, color: C.dim }}>queued</span>}
           {state === "error"   && <span style={{ fontFamily: MONO, fontSize: 10, color: C.rose }}>failed</span>}
           {state === "ok" && vel && (

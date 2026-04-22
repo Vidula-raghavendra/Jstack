@@ -1,4 +1,5 @@
 import { enrichForMcp, type Pack } from "../enrich/route";
+import { isValidDomain, sanitizeError, normalizeDomain } from "../_utils";
 
 export const maxDuration = 300;
 
@@ -72,9 +73,16 @@ async function handleRpc(req: JsonRpcRequest) {
       return ok(req.id, { tools: TOOLS });
 
     case "tools/call": {
-      const params = (req.params ?? {}) as { name?: string; arguments?: Record<string, unknown> };
-      const name = params.name;
-      const args = params.arguments ?? {};
+      // Runtime guard — params must be a plain object, not a string/array/null
+      const rawParams = req.params;
+      if (typeof rawParams !== "object" || rawParams === null || Array.isArray(rawParams)) {
+        return err(req.id, -32602, "params must be an object");
+      }
+      const params = rawParams as { name?: unknown; arguments?: unknown };
+      const name = typeof params.name === "string" ? params.name : null;
+      const args = (typeof params.arguments === "object" && params.arguments !== null && !Array.isArray(params.arguments))
+        ? params.arguments as Record<string, unknown>
+        : {};
 
       if (name === "list_packs") {
         return ok(req.id, {
@@ -83,16 +91,22 @@ async function handleRpc(req: JsonRpcRequest) {
       }
 
       if (name === "enrich_companies") {
-        const domains = Array.isArray(args.domains) ? (args.domains as string[]).slice(0, 10) : [];
+        // Validate + sanitize domains the same way the enrich route does
+        const domains = (Array.isArray(args.domains) ? args.domains : [])
+          .filter((d): d is string => typeof d === "string")
+          .map(normalizeDomain)
+          .filter(isValidDomain)
+          .slice(0, 10);
+
         const pack: Pack = args.pack === "recruiter" || args.pack === "vc" ? args.pack : "sdr";
-        if (!domains.length) return err(req.id, -32602, "domains array required");
+        if (!domains.length) return err(req.id, -32602, "domains array required (valid hostnames only)");
 
         const results = [];
         for (const d of domains) {
           try {
             results.push(await enrichForMcp(d, pack));
           } catch (e) {
-            results.push({ domain: d, status: "error" as const, pack, error: String(e) });
+            results.push({ domain: d, status: "error" as const, pack, error: sanitizeError(String(e)) });
           }
         }
 
@@ -101,11 +115,15 @@ async function handleRpc(req: JsonRpcRequest) {
         });
       }
 
-      return err(req.id, -32601, `Unknown tool: ${name}`);
+      // Cap echoed input to avoid reflecting long/weird strings back
+      const safeName = String(name ?? "").slice(0, 64);
+      return err(req.id, -32601, `Unknown tool: ${safeName}`);
     }
 
-    default:
-      return err(req.id, -32601, `Unknown method: ${req.method}`);
+    default: {
+      const safeMethod = String(req.method ?? "").slice(0, 64);
+      return err(req.id, -32601, `Unknown method: ${safeMethod}`);
+    }
   }
 }
 
@@ -118,6 +136,10 @@ export async function POST(request: Request) {
   }
 
   if (Array.isArray(body)) {
+    // Cap batch size — unlimited Promise.all would fire unlimited Hyperbrowser sessions
+    if (body.length > 20) {
+      return Response.json(err(null, -32600, "Batch size limit is 20 requests"), { status: 400 });
+    }
     const responses = (await Promise.all(body.map(handleRpc))).filter(Boolean);
     return Response.json(responses);
   }

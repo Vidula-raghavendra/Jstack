@@ -16,6 +16,21 @@ export const metadata: Metadata = {
   title: "Seam — Intelligence Runs Deep",
   description:
     "Paste domains, pick a pack. Get SDR, Recruiter, or VC signals extracted in 60 seconds from Hyperbrowser's stealth crawler. MCP-native.",
+  openGraph: {
+    title: "Seam — Intelligence Runs Deep",
+    description:
+      "Paste domains, pick a pack. Get SDR, Recruiter, or VC signals extracted in 60 seconds from Hyperbrowser's stealth crawler. MCP-native.",
+    url: "https://jstack-omega.vercel.app",
+    siteName: "Seam",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Seam — Intelligence Runs Deep",
+    description:
+      "Paste domains, pick a pack. Get SDR, Recruiter, or VC signals extracted in 60 seconds from Hyperbrowser's stealth crawler. MCP-native.",
+  },
+  metadataBase: new URL("https://jstack-omega.vercel.app"),
 };
 
 export default function RootLayout({

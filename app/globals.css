@@ -1,26 +1,64 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #0A0908;
+  --text: #F4EFE4;
+  --sage: #7EA88A;
+  --border: #2A2622;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01", "ss02", "cv01", "cv11";
 }
 
 body {
-  background: #0B0A0E;
-  color: #F4F3FF;
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 400;
+}
+
+/* Tabular figures inside mono — keeps numbers aligned in tables/data */
+code, pre, .font-mono, [style*="Geist Mono"], [style*="MONO"] {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "calt" 0;
+}
+
+/* Sage selection — matches brand */
+::selection {
+  background: rgba(126, 168, 138, 0.32);
+  color: #F4EFE4;
+}
+
+/* Focus rings — keyboard-only, sage at 2px offset */
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--sage);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Anchor links smooth-target alignment for nav jumps */
+section[id] { scroll-margin-top: 88px; }
+
+/* Reduce motion — respect user preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

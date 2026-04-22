@@ -5,109 +5,114 @@ import {
   motion,
   useScroll,
   useSpring,
-  useMotionValue,
   useTransform,
-  useInView,
   AnimatePresence,
 } from "framer-motion";
 import SmoothScroll from "./components/SmoothScroll";
 
-/* ─── TOKENS ─── */
+/* ─── TOKENS — dark warm, sage accent, hyperbrowser-style ─── */
 const C = {
-  bg:        "#F2EDE2",
-  surface:   "#E8E1D4",
-  surfaceHi: "#DDD5C5",
-  border:    "#CEC5B4",
-  borderHi:  "#B8AD9C",
-  text:      "#1A1410",
-  muted:     "#7A6D5C",
-  dim:       "#B0A598",
-  sage:      "#3D6B50",
-  sageMid:   "#4F8766",
-  sageLo:    "rgba(61,107,80,0.08)",
-  sageGlow:  "rgba(61,107,80,0.22)",
-  indigo:    "#5B62A0",
-  indigoDim: "rgba(91,98,160,0.08)",
-  teal:      "#3D7A6E",
-  tealDim:   "rgba(61,122,110,0.08)",
-  term:      "#171310",
-  termSurf:  "#201C18",
-  termBdr:   "#2A2520",
-  termText:  "#E8E2D8",
-  termDim:   "#52483E",
+  bg:         "#0A0908",
+  bgHi:       "#0F0E0C",
+  surface:    "#141210",
+  surfaceHi:  "#1A1816",
+  bevelTop:   "rgba(255,255,255,0.07)",
+  bevelMid:   "rgba(255,255,255,0.02)",
+  bevelBot:   "rgba(255,255,255,0.00)",
+  border:     "#2A2622",
+  borderHi:   "#3A352F",
+  text:       "#F4EFE4",
+  textHi:     "#FFFFFF",
+  muted:      "#8A8174",
+  dim:        "#5A5248",
+  faint:      "#3A332D",
+  sage:       "#7EA88A",
+  sageHi:     "#94BD9E",
+  sageGlow:   "rgba(126,168,138,0.18)",
+  sageDim:    "rgba(126,168,138,0.10)",
+  indigo:     "#8B90C8",
+  indigoDim:  "rgba(139,144,200,0.10)",
+  gold:       "#C9A96E",
+  goldDim:    "rgba(201,169,110,0.10)",
 };
 
-/* SF Pro system stack — renders native on Apple, Helvetica elsewhere */
-const SF   = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif";
+const SF    = "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif";
 const SERIF = "'Bodoni Moda', Georgia, serif";
 const MONO  = "var(--font-geist-mono), 'Geist Mono', 'SF Mono', monospace";
 const E     = [0.22, 1, 0.36, 1] as [number, number, number, number];
 
-/* ─── DATA ─── */
-const PACKS = [
+/* ─── DATA — pack accents match DESIGN.md + app page ─── */
+const FEATURES = [
   {
-    id: "sdr", n: "01",
-    label: "SDR Pack",
-    tag: "outbound sales",
-    color: C.sage, bg: "rgba(61,107,80,0.06)",
-    headline: "Outbound signals that close.",
-    signals: ["Pricing model: sales-led vs self-serve", "Decision-makers + public LinkedIn", "Named customer logos from case studies", "Recent product launches & integrations", "Buying intent signals", "Cold call context in 60s"],
+    id: "sdr", n: "01", label: "SDR Pack",
+    color: C.gold,
+    icon: "▣",
+    title: "Outbound that closes.",
+    body: "Pricing model, decision-makers, named logos, buying intent. Cold-call context extracted from any domain in sixty seconds.",
+    tags: ["</> Pricing model", "◎ Decision-makers", "✦ Named logos", "↗ Buying intent", "✉ Cold-call ready"],
+    sample: "stripe.com → 8 people · sales-led · 40 markets",
   },
   {
-    id: "recruiter", n: "02",
-    label: "Recruiter Pack",
-    tag: "talent intel",
-    color: C.indigo, bg: "rgba(91,98,160,0.06)",
-    headline: "Know the org before the call.",
-    signals: ["All open roles with team & location", "Tech stack from job post language", "Velocity: aggressive / steady / slow", "Engineering leaders & hiring managers", "Team size trajectory", "Compensation signals"],
+    id: "recruiter", n: "02", label: "Recruiter Pack",
+    color: C.indigo,
+    icon: "◫",
+    title: "Read the org.",
+    body: "Open roles, tech stack inferred from job posts, hiring velocity, eng leaders by name. Know the team before the call.",
+    tags: ["⌘ Open roles", "{ } Tech stack", "↑ Velocity", "◉ Eng leaders", "$ Comp signals"],
+    sample: "linear.app → 12 roles · TS+Rust · CTO named",
   },
   {
-    id: "vc", n: "03",
-    label: "VC Pack",
-    tag: "investment screening",
-    color: C.teal, bg: "rgba(61,122,110,0.06)",
-    headline: "Investment-grade signals, fast.",
-    signals: ["Funding stage + named investors", "Traction: logos, ARR signals, growth", "Founder backgrounds & prior exits", "Market expansion & partnership moves", "Comparable company comps", "Team caliber indicators"],
+    id: "vc", n: "03", label: "VC Pack",
+    color: C.sage,
+    icon: "◈",
+    title: "Diligence in a minute.",
+    body: "Funding stage, named investors, traction signals, founder backgrounds, market expansion. Investment-grade signals at speed.",
+    tags: ["$ Funding", "◆ Investors", "↗ Traction", "★ Founders", "≈ Comps"],
+    sample: "vercel.com → Series C · $150M · 3 founders",
+  },
+  {
+    id: "mcp", n: "04", label: "MCP Native",
+    color: C.sage,
+    icon: "✦",
+    title: "Lives in Claude.",
+    body: "JSON-RPC 2.0 MCP server. Add the config block once, then call enrich_companies inline from Claude or Cursor. No tab-switching.",
+    tags: ["◇ MCP server", "→ enrich_companies()", "→ list_packs()", "✦ Claude + Cursor", "⌁ Stdio bridge"],
+    sample: "> extract stripe.com with the SDR pack",
   },
 ];
 
 const STEPS = [
-  { n: "01", title: "Paste domains", body: "Up to 10 domains per run. No signup, no setup, no API key." },
-  { n: "02", title: "Pick your pack", body: "SDR, Recruiter, or VC. The pack reshapes signals, people prioritization, and CSV schema." },
-  { n: "03", title: "Signals stream back", body: "Real-time extraction from a stealth Hyperbrowser session. Export CSV or pipe to Claude via MCP." },
+  { n: "01", title: "Paste up to ten domains.", body: "No signup, no API key. Comma-separated domain list, that's it." },
+  { n: "02", title: "Pick a pack.", body: "SDR, Recruiter, or VC. The pack reshapes which signals surface and how the CSV exports." },
+  { n: "03", title: "Watch the seam open.", body: "Real-time stream from a Hyperbrowser stealth session. Export CSV or pipe to Claude via MCP." },
 ];
 
-const TICKER_ITEMS = [
-  "stripe.com — SDR — 6 signals — 8 people",
-  "linear.app — Recruiter — 12 open roles — 44s",
-  "vercel.com — VC — Series C — 3 founders",
-  "notion.so — SDR — sales-led — 14 names",
-  "figma.com — VC — YC S20 — $800M ARR",
-  "resend.com — SDR — 100+ logos — 33 investors",
-  "supabase.com — Recruiter — aggressive — Rust + Go",
+const MARQUEE = [
+  "stripe.com", "linear.app", "vercel.com", "notion.so", "figma.com",
+  "resend.com", "supabase.com", "posthog.com", "clerk.com", "browserbase.com",
 ];
 
 type Line = { t: "cmd"|"status"|"key"|"val"|"sig"|"gap"|"done"; s: string };
 
 const DEMOS: { domain: string; pack: string; color: string; lines: Line[] }[] = [
   {
-    domain: "stripe.com", pack: "SDR", color: C.sage,
+    domain: "stripe.com", pack: "SDR", color: C.gold,
     lines: [
       { t:"cmd",    s:"$ seam enrich stripe.com --pack sdr" },
       { t:"status", s:"opening stealth session..." },
       { t:"gap",    s:"" },
       { t:"key",    s:"COMPANY" },
-      { t:"val",    s:"Stripe — payments infrastructure for the internet" },
-      { t:"key",    s:"PRICING MODEL" },
-      { t:"val",    s:"sales-led · enterprise contracts · self-serve SMB" },
+      { t:"val",    s:"Stripe — payments infra for the internet" },
+      { t:"key",    s:"PRICING" },
+      { t:"val",    s:"sales-led · enterprise · self-serve SMB" },
       { t:"gap",    s:"" },
       { t:"key",    s:"BUYING SIGNALS" },
-      { t:"sig",    s:"· 'Talk to sales' on all enterprise tiers" },
-      { t:"sig",    s:"· Launched 40+ new markets Q3 → expansion signal" },
+      { t:"sig",    s:"· 'Talk to sales' on enterprise tiers" },
+      { t:"sig",    s:"· Launched 40+ new markets last quarter" },
       { t:"sig",    s:"· API-first → dev champion at every account" },
       { t:"gap",    s:"" },
       { t:"key",    s:"PEOPLE" },
-      { t:"val",    s:"8 found — Patrick Collison, Eileen Donahoe +6" },
+      { t:"val",    s:"8 found · Patrick Collison +7" },
       { t:"done",   s:"✓  extracted in 58s" },
     ],
   },
@@ -120,36 +125,36 @@ const DEMOS: { domain: string; pack: string; color: string; lines: Line[] }[] = 
       { t:"key",    s:"HIRING VELOCITY" },
       { t:"val",    s:"aggressive · 12 open roles" },
       { t:"key",    s:"TECH STACK" },
-      { t:"val",    s:"TypeScript, Rust, PostgreSQL, Kubernetes" },
+      { t:"val",    s:"TypeScript, Rust, PostgreSQL, K8s" },
       { t:"gap",    s:"" },
       { t:"key",    s:"HIRING SIGNALS" },
-      { t:"sig",    s:"· 8 senior eng roles → rapid team expansion" },
-      { t:"sig",    s:"· Hiring Rust infra → platform rewrite in motion" },
-      { t:"sig",    s:"· Berlin + SF both actively hiring simultaneously" },
+      { t:"sig",    s:"· 8 senior eng roles → rapid expansion" },
+      { t:"sig",    s:"· Hiring Rust infra → platform rewrite" },
+      { t:"sig",    s:"· Berlin + SF both actively hiring" },
       { t:"gap",    s:"" },
       { t:"key",    s:"ENG LEADERS" },
-      { t:"val",    s:"4 found — Tuomas Artman (CTO), Nan Yu +2" },
+      { t:"val",    s:"4 found · Tuomas Artman (CTO) +3" },
       { t:"done",   s:"✓  extracted in 44s" },
     ],
   },
   {
-    domain: "vercel.com", pack: "VC", color: C.teal,
+    domain: "vercel.com", pack: "VC", color: C.sage,
     lines: [
       { t:"cmd",    s:"$ seam enrich vercel.com --pack vc" },
       { t:"status", s:"opening stealth session..." },
       { t:"gap",    s:"" },
       { t:"key",    s:"FUNDING" },
-      { t:"val",    s:"Series C · $150M · Tiger Global, Bedrock, GV" },
+      { t:"val",    s:"Series C · $150M · Tiger, Bedrock, GV" },
       { t:"key",    s:"TRACTION" },
-      { t:"val",    s:"10,000+ paying teams · 10× YoY revenue growth" },
+      { t:"val",    s:"10,000+ paying teams · 10× YoY revenue" },
       { t:"gap",    s:"" },
       { t:"key",    s:"INVESTMENT SIGNALS" },
-      { t:"sig",    s:"· Ex-Google/Meta founders · strong angel syndicate" },
-      { t:"sig",    s:"· ARR $100M+ implied by Series C valuation" },
-      { t:"sig",    s:"· Shopify + Loom partnerships → enterprise push" },
+      { t:"sig",    s:"· Ex-Google/Meta founders" },
+      { t:"sig",    s:"· ARR $100M+ implied by valuation" },
+      { t:"sig",    s:"· Shopify + Loom partnerships" },
       { t:"gap",    s:"" },
       { t:"key",    s:"FOUNDERS" },
-      { t:"val",    s:"3 found — Guillermo Rauch (CEO), Matheus Fernandes" },
+      { t:"val",    s:"3 found · Guillermo Rauch (CEO)" },
       { t:"done",   s:"✓  extracted in 62s" },
     ],
   },
@@ -167,24 +172,101 @@ const MCP_CONFIG = `{
   }
 }`;
 
+/* ASCII globe — used as CTA background, hyperbrowser-style */
+const ASCII_GLOBE = `
+                    .........
+              ..::-=+*+++=:.....
+          ..-=+##*+****=---:....
+       ..=+##*+:-+***#=:::.::-:..
+     .:=*##+:::-====+++=---::::-:.
+   .-+##+::-=+****####****+=---::-:
+  .=##*-:-=*###%%%%%%%%###**+=----.
+ .+#*-::=*###%%%%%%%%%%%###**+=---:.
+.=#*-::=*###%%%%%%%%%%%%%###**+=---:.
+:#*-::=*###%%%%%%%%%%%%%%%###**+=---:
+=*-::=*####%%%%%%%%%%%%%%%%###*+=----
+*-::=*####%%%%@@@@@%%%%%%%%###*+=----
+::-=*####%%%@@@@@@@@@%%%%%%###*+=----
+::=*####%%%@@@@@@@@@@@%%%%%###**=----
+:-+####%%%%@@@@@@@@@@%%%%%####*+----:
+:=*###%%%%%%@@@@@@@@%%%%%%####*=----:
+:=*####%%%%%%%%%%%%%%%%%%%###*+=---:.
+.=*####%%%%%%%%%%%%%%%%%%###*+=----.
+ :=*####%%%%%%%%%%%%%%%%###*+=---:.
+  :=+####%%%%%%%%%%%%%%###*+=----.
+   .-+####%%%%%%%%%%%%###*+=----.
+    .-=*####%%%%%%%###**+=----.
+      .-=+*####****+=====---.
+         .::-=+++++===---:.
+            ......::::..
+`;
+
 /* ─── COMPONENTS ─── */
 
 function Grain() {
   return (
-    <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 150, opacity: 0.025 }}>
+    <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 150, opacity: 0.045, mixBlendMode: "overlay" }}>
       <svg width="100%" height="100%">
-        <filter id="g"><feTurbulence type="fractalNoise" baseFrequency="0.70" numOctaves="4" stitchTiles="stitch" /><feColorMatrix type="saturate" values="0" /></filter>
+        <filter id="g"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch" /><feColorMatrix type="saturate" values="0" /></filter>
         <rect width="100%" height="100%" filter="url(#g)" />
       </svg>
     </div>
   );
 }
 
+/* Beveled outer frame with corner brackets — hyperbrowser aesthetic */
+function BeveledCard({
+  children, accent = C.sage, n, className = "",
+}: { children: React.ReactNode; accent?: string; n?: string; className?: string }) {
+  return (
+    <div
+      className={`relative ${className}`}
+      style={{
+        borderRadius: 14,
+        padding: 12,
+        background: `linear-gradient(155deg, ${C.bevelTop} 0%, ${C.bevelMid} 35%, ${C.bevelBot} 100%), ${C.bgHi}`,
+        border: `1px solid ${C.border}`,
+        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.04)`,
+      }}>
+      {/* corner brackets */}
+      <Bracket pos="tl" />
+      <Bracket pos="tr" />
+      <Bracket pos="bl" />
+      <Bracket pos="br" />
+      {/* inner card */}
+      <div className="relative h-full" style={{
+        background: C.surface,
+        borderRadius: 8,
+        border: `1px solid ${C.border}`,
+      }}>
+        {n && (
+          <span className="absolute top-3 right-4" style={{ fontFamily: MONO, fontSize: 10, color: C.dim, letterSpacing: "0.1em" }}>{n}</span>
+        )}
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function Bracket({ pos }: { pos: "tl"|"tr"|"bl"|"br" }) {
+  const size = 9;
+  const stroke = C.dim;
+  const w = 1;
+  const inset = 4;
+  const map = {
+    tl: { top: inset, left: inset, borderTop: `${w}px solid ${stroke}`, borderLeft: `${w}px solid ${stroke}` },
+    tr: { top: inset, right: inset, borderTop: `${w}px solid ${stroke}`, borderRight: `${w}px solid ${stroke}` },
+    bl: { bottom: inset, left: inset, borderBottom: `${w}px solid ${stroke}`, borderLeft: `${w}px solid ${stroke}` },
+    br: { bottom: inset, right: inset, borderBottom: `${w}px solid ${stroke}`, borderRight: `${w}px solid ${stroke}` },
+  };
+  return <div className="absolute pointer-events-none" style={{ width: size, height: size, ...map[pos] }} />;
+}
+
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <button onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-      style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.1em", color: copied ? C.sage : C.termDim, border: `1px solid ${copied ? C.sage : C.termBdr}`, borderRadius: 2, padding: "4px 10px", background: copied ? C.sageLo : "transparent", cursor: "pointer", transition: "all 0.2s" }}>
+      style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.16em", color: copied ? C.sage : C.dim, padding: "4px 0", background: "transparent", cursor: "pointer", transition: "color 0.2s", border: "none" }}>
       {copied ? "COPIED" : "COPY"}
     </button>
   );
@@ -197,7 +279,7 @@ function Terminal() {
   useEffect(() => {
     let t: ReturnType<typeof setTimeout>;
     if (count < demo.lines.length) {
-      const d = count === 0 ? 600 : demo.lines[count - 1]?.t === "gap" ? 60 : 150;
+      const d = count === 0 ? 600 : demo.lines[count - 1]?.t === "gap" ? 60 : 140;
       t = setTimeout(() => setCount(c => c + 1), d);
     } else {
       t = setTimeout(() => { setIdx(i => (i + 1) % DEMOS.length); setCount(0); }, 3200);
@@ -205,32 +287,29 @@ function Terminal() {
     return () => clearTimeout(t);
   }, [count, demo.lines.length]);
 
-  const lc = (l: Line) => l.t === "sig" ? demo.color : l.t === "done" ? C.sage : l.t === "val" ? C.termText : C.termDim;
+  const lc = (l: Line) => l.t === "sig" ? demo.color : l.t === "done" ? C.sage : l.t === "val" ? C.text : C.dim;
 
   return (
-    <div className="rounded-lg overflow-hidden" style={{ background: C.term, border: `1px solid ${C.termBdr}`, boxShadow: `0 24px 48px rgba(23,19,16,0.22), 0 2px 8px rgba(23,19,16,0.14)` }}>
-      <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: C.termBdr }}>
-        <div className="flex gap-1.5">
-          {[0,1,2].map(i => <div key={i} className="w-2.5 h-2.5 rounded-full" style={{ background: "#342E28" }} />)}
-        </div>
+    <BeveledCard>
+      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: `1px solid ${C.border}` }}>
         <div className="flex items-center gap-2">
           <motion.div className="w-1.5 h-1.5 rounded-full" style={{ background: C.sage }}
             animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 2, repeat: Infinity }} />
-          <span style={{ fontFamily: MONO, fontSize: 9, color: C.termDim, letterSpacing: "0.1em" }}>SEAM · LIVE</span>
+          <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.16em" }}>SEAM · LIVE</span>
         </div>
         <AnimatePresence mode="wait">
           <motion.span key={demo.pack} initial={{ opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -3 }}
-            style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.08em", color: demo.color, background: `${demo.color}18`, border: `1px solid ${demo.color}30`, borderRadius: 2, padding: "2px 8px" }}>
+            style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.16em", color: demo.color }}>
             {demo.pack.toUpperCase()}
           </motion.span>
         </AnimatePresence>
       </div>
-      <div style={{ minHeight: 280, padding: "18px 22px", fontFamily: MONO, fontSize: 11, lineHeight: 1.7 }}>
+      <div style={{ minHeight: 340, padding: "20px 24px", fontFamily: MONO, fontSize: 11, lineHeight: 1.75 }}>
         <AnimatePresence mode="wait">
           <motion.div key={idx} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
             {demo.lines.slice(0, count).map((line, i) => (
               <motion.div key={i} initial={{ opacity: 0, x: -3 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.12 }}
-                style={{ color: lc(line), fontSize: line.t === "key" ? 9 : 11, letterSpacing: line.t === "key" ? "0.14em" : "0.01em", marginTop: line.t === "key" ? 10 : 0, height: line.t === "gap" ? 4 : "auto", fontWeight: line.t === "done" ? 500 : 400 }}>
+                style={{ color: lc(line), fontSize: line.t === "key" ? 9 : 11, letterSpacing: line.t === "key" ? "0.18em" : "0.01em", marginTop: line.t === "key" ? 12 : 0, height: line.t === "gap" ? 4 : "auto", fontWeight: line.t === "done" ? 500 : 400 }}>
                 {line.t !== "gap" && line.s}
                 {i === count - 1 && count < demo.lines.length && line.t !== "gap" && (
                   <motion.span style={{ color: C.sage }} animate={{ opacity: [1, 0] }} transition={{ duration: 0.5, repeat: Infinity }}>▋</motion.span>
@@ -240,76 +319,53 @@ function Terminal() {
           </motion.div>
         </AnimatePresence>
       </div>
-      <div className="px-4 py-2.5 border-t flex items-center justify-between" style={{ borderColor: C.termBdr }}>
+      <div className="px-4 py-2.5 flex items-center justify-between" style={{ borderTop: `1px solid ${C.border}` }}>
         <AnimatePresence mode="wait">
           <motion.span key={demo.domain} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ fontFamily: MONO, fontSize: 9, color: C.termDim, letterSpacing: "0.06em" }}>{demo.domain}</motion.span>
+            style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.1em" }}>{demo.domain}</motion.span>
         </AnimatePresence>
         {count > 0 && count < demo.lines.length ? (
-          <motion.div className="flex items-center gap-1.5" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <motion.div className="flex items-center gap-2" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <motion.span className="w-1 h-1 rounded-full" style={{ background: C.sage }} animate={{ scale: [1, 1.8, 1] }} transition={{ duration: 0.8, repeat: Infinity }} />
-            <span style={{ fontFamily: MONO, fontSize: 9, color: C.sage, letterSpacing: "0.1em" }}>EXTRACTING</span>
+            <span style={{ fontFamily: MONO, fontSize: 9, color: C.sage, letterSpacing: "0.16em" }}>EXTRACTING</span>
           </motion.div>
         ) : count >= demo.lines.length ? (
-          <span style={{ fontFamily: MONO, fontSize: 9, color: C.sage, letterSpacing: "0.08em" }}>COMPLETE</span>
+          <span style={{ fontFamily: MONO, fontSize: 9, color: C.sage, letterSpacing: "0.16em" }}>COMPLETE</span>
         ) : null}
       </div>
-    </div>
+    </BeveledCard>
   );
 }
 
-function PackCard({ pack, index }: { pack: typeof PACKS[0]; index: number }) {
-  const [open, setOpen] = useState(false);
+/* Pill button — login/signup style from hyperbrowser ref. 44px touch target via padding. */
+function PillButton({
+  children, primary, href, onClick,
+}: { children: React.ReactNode; primary?: boolean; href?: string; onClick?: () => void }) {
+  const base = {
+    fontFamily: SF, fontSize: 13, fontWeight: 600,
+    padding: "13px 24px", borderRadius: 999, textDecoration: "none",
+    letterSpacing: "0.02em", textTransform: "uppercase" as const,
+    transition: "background 0.18s, color 0.18s, transform 0.15s",
+    display: "inline-flex", alignItems: "center", gap: 8, lineHeight: 1,
+    cursor: "pointer", border: "none", minHeight: 44,
+  };
+  const styles = primary
+    ? { ...base, background: C.text, color: C.bg }
+    : { ...base, background: C.surfaceHi, color: C.text, border: `1px solid ${C.border}` };
+  const Comp = href ? "a" : "button";
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }} transition={{ duration: 0.55, delay: index * 0.08, ease: E }}
-      className="rounded-xl overflow-hidden"
-      style={{ background: C.bg, border: `1px solid ${C.border}` }}>
-
-      {/* header row */}
-      <div className="grid grid-cols-[1fr_auto] items-center gap-4 px-7 pt-7 pb-5">
-        <div>
-          <div className="flex items-center gap-3 mb-3">
-            <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.14em", color: pack.color }}>{pack.n}</span>
-            <span style={{ fontFamily: SF, fontSize: 11, fontWeight: 500, color: pack.color, background: pack.bg, borderRadius: 20, padding: "3px 10px", letterSpacing: "0.04em" }}>{pack.label}</span>
-            <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.1em" }}>{pack.tag}</span>
-          </div>
-          <h3 style={{ fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, fontSize: "clamp(26px,3vw,38px)", color: C.text, letterSpacing: "-0.02em", lineHeight: 1.1 }}>
-            {pack.headline}
-          </h3>
-        </div>
-        <button onClick={() => setOpen(o => !o)}
-          style={{ width: 36, height: 36, borderRadius: "50%", border: `1px solid ${C.border}`, background: open ? pack.color : "transparent", color: open ? "#F2EDE2" : C.muted, fontFamily: SF, fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.2s", flexShrink: 0 }}>
-          {open ? "−" : "+"}
-        </button>
-      </div>
-
-      {/* signal grid — always visible */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-px mx-7 mb-6" style={{ background: C.border }}>
-        {pack.signals.slice(0, open ? 6 : 3).map((sig, i) => (
-          <motion.div key={i}
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            transition={{ duration: 0.3, delay: i * 0.04 }}
-            style={{ background: C.bg, padding: "10px 14px" }}>
-            <span style={{ fontFamily: SF, fontSize: 12, color: C.muted, lineHeight: 1.5, display: "block" }}>{sig}</span>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* footer */}
-      <div className="flex items-center justify-between px-7 py-4 border-t" style={{ borderColor: C.border, background: C.surface }}>
-        <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.12em" }}>
-          {pack.signals.length} SIGNAL CATEGORIES
-        </span>
-        <a href="/app"
-          style={{ fontFamily: SF, fontWeight: 600, fontSize: 12, color: "#F2EDE2", background: pack.color, padding: "7px 18px", borderRadius: 20, textDecoration: "none", letterSpacing: "0.02em", transition: "all 0.15s" }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = "0.85"; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = "1"; }}>
-          Try {pack.label} →
-        </a>
-      </div>
-    </motion.div>
+    <Comp href={href} onClick={onClick}
+      style={styles}
+      onMouseEnter={e => {
+        if (primary) (e.currentTarget as HTMLElement).style.background = C.sageHi;
+        else { (e.currentTarget as HTMLElement).style.background = C.surface; (e.currentTarget as HTMLElement).style.color = C.textHi; }
+      }}
+      onMouseLeave={e => {
+        if (primary) (e.currentTarget as HTMLElement).style.background = C.text;
+        else { (e.currentTarget as HTMLElement).style.background = C.surfaceHi; (e.currentTarget as HTMLElement).style.color = C.text; }
+      }}>
+      {children}
+    </Comp>
   );
 }
 
@@ -320,10 +376,6 @@ export default function Page() {
   const [scrolled, setScrolled] = useState(false);
   const [navVisible, setNavVisible] = useState(true);
   const lastY = useRef(0);
-
-  const breakRef = useRef<HTMLElement>(null);
-  const { scrollYProgress: bp } = useScroll({ target: breakRef, offset: ["start end", "end start"] });
-  const breakY = useTransform(bp, [0, 1], ["-8%", "8%"]);
 
   useEffect(() => {
     const unsub = scrollYProgress.on("change", () => {
@@ -341,334 +393,316 @@ export default function Page() {
       <div style={{ fontFamily: SF, background: C.bg, color: C.text }} className="min-h-screen overflow-x-hidden">
         <Grain />
 
-        {/* progress */}
         <motion.div className="fixed top-0 left-0 right-0 h-[2px] origin-left" style={{ zIndex: 60, scaleX, background: C.sage }} />
 
         {/* ── NAV ── */}
-        <motion.nav className="fixed top-0 left-0 right-0 z-50 px-6 lg:px-12 flex items-center justify-between"
-          style={{ height: 56 }}
+        <motion.nav className="fixed top-0 left-0 right-0 z-50 px-6 lg:px-10 flex items-center justify-between"
+          style={{ height: 64 }}
           animate={{
-            background: scrolled ? "rgba(242,237,226,0.96)" : "rgba(242,237,226,0)",
-            backdropFilter: scrolled ? "blur(20px)" : "blur(0px)",
+            background: scrolled ? "rgba(10,9,8,0.85)" : "rgba(10,9,8,0)",
+            backdropFilter: scrolled ? "blur(16px)" : "blur(0px)",
             borderBottom: scrolled ? `1px solid ${C.border}` : "1px solid transparent",
-            y: navVisible ? 0 : -60,
+            y: navVisible ? 0 : -70,
           }}
           transition={{ duration: 0.25, ease: E }}>
 
-          <a href="/" style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 21, color: C.text, textDecoration: "none", display: "flex", alignItems: "baseline", gap: 2, letterSpacing: "-0.01em", fontWeight: 400 }}>
-            Seam<span style={{ color: C.sage, fontSize: 10 }}>·</span>
+          <a href="/" className="flex items-baseline gap-1" style={{ textDecoration: "none" }}>
+            <span style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 24, color: C.text, letterSpacing: "-0.01em", fontWeight: 400 }}>Seam</span>
+            <span style={{ color: C.sage, fontSize: 12, fontWeight: 700 }}>·</span>
           </a>
 
-          <div className="hidden md:flex items-center gap-6">
-            {["Packs", "Process", "MCP"].map(item => (
-              <a key={item} href={`#${item.toLowerCase()}`}
-                style={{ fontFamily: SF, fontSize: 13, fontWeight: 450, color: C.muted, textDecoration: "none", transition: "color 0.15s" }}
+          <div className="hidden md:flex items-center gap-9">
+            {[["packs","Packs"],["process","Process"],["mcp","MCP"]].map(([id,label]) => (
+              <a key={id} href={`#${id}`}
+                style={{ fontFamily: SF, fontSize: 13, fontWeight: 500, color: C.muted, textDecoration: "none", transition: "color 0.15s", letterSpacing: "0.01em" }}
                 onMouseEnter={e => (e.currentTarget.style.color = C.text)}
-                onMouseLeave={e => (e.currentTarget.style.color = C.muted)}>{item}</a>
+                onMouseLeave={e => (e.currentTarget.style.color = C.muted)}>{label}</a>
             ))}
           </div>
 
-          <a href="/app"
-            style={{ fontFamily: SF, fontWeight: 600, fontSize: 13, color: "#F2EDE2", background: C.sage, padding: "8px 20px", borderRadius: 20, textDecoration: "none", letterSpacing: "0.01em", transition: "all 0.15s" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = C.sageMid; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = C.sage; }}>
-            Open app
-          </a>
+          <div className="flex items-center gap-2">
+            <PillButton href="https://github.com/anthropics" >Docs</PillButton>
+            <PillButton primary href="/app">Open app</PillButton>
+          </div>
         </motion.nav>
 
         {/* ── HERO ── */}
-        <section className="relative pt-28 pb-16 overflow-hidden" style={{ background: C.bg }}>
-          <div className="max-w-[1200px] mx-auto px-6 lg:px-12">
+        <section className="relative pt-32 pb-20" style={{ background: C.bg }}>
+          <div className="max-w-[1320px] mx-auto px-6 lg:px-10">
 
-            {/* eyebrow */}
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-              className="flex items-center gap-3 mb-8">
-              <div style={{ width: 6, height: 6, borderRadius: "50%", background: C.sage }} />
-              <span style={{ fontFamily: MONO, fontSize: 9, color: C.muted, letterSpacing: "0.18em" }}>MCP-NATIVE · STEALTH CRAWLER · 60s</span>
-              <div style={{ flex: 1, height: 1, background: C.border, maxWidth: 120 }} />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
+              className="inline-flex items-center gap-2 mb-10"
+              style={{ background: C.sageDim, border: `1px solid ${C.sage}30`, borderRadius: 999, padding: "5px 12px 5px 10px" }}>
+              <motion.div style={{ width: 6, height: 6, borderRadius: "50%", background: C.sage }}
+                animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 2, repeat: Infinity }} />
+              <span style={{ fontFamily: MONO, fontSize: 10, color: C.sage, letterSpacing: "0.18em" }}>STEALTH SESSION ONLINE</span>
             </motion.div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-10 lg:gap-16 items-start">
-              {/* headline block */}
-              <div>
-                <div className="overflow-hidden mb-1">
-                  <motion.p initial={{ y: "100%" }} animate={{ y: "0%" }} transition={{ duration: 0.8, delay: 0.3, ease: E }}
-                    style={{ fontFamily: SF, fontSize: "clamp(14px,1.4vw,17px)", fontWeight: 400, color: C.muted, letterSpacing: "0.02em" }}>
+            <div className="grid grid-cols-12 gap-6 lg:gap-10 items-end">
+              <div className="col-span-12 lg:col-span-7">
+                <div className="overflow-hidden">
+                  <motion.h1 initial={{ y: "101%" }} animate={{ y: "0%" }} transition={{ duration: 0.95, delay: 0.3, ease: E }}
+                    style={{ fontFamily: SF, fontWeight: 700, fontSize: "clamp(56px,8vw,128px)", letterSpacing: "-0.045em", lineHeight: 0.92, color: C.text }}>
                     Find the
-                  </motion.p>
+                  </motion.h1>
                 </div>
                 <div className="overflow-hidden">
-                  <motion.h1 initial={{ y: "100%" }} animate={{ y: "0%" }} transition={{ duration: 0.9, delay: 0.38, ease: E }}
-                    style={{ fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, fontSize: "clamp(64px,9vw,124px)", letterSpacing: "-0.025em", lineHeight: 0.88, color: C.text, marginBottom: 4 }}>
-                    seam
+                  <motion.h1 initial={{ y: "101%" }} animate={{ y: "0%" }} transition={{ duration: 0.95, delay: 0.4, ease: E }}
+                    style={{ fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, fontSize: "clamp(64px,9vw,144px)", letterSpacing: "-0.035em", lineHeight: 0.92, color: C.text, marginTop: -2 }}>
+                    seam<span style={{ color: C.sage, fontStyle: "normal" }}>.</span>
                   </motion.h1>
                 </div>
-                <div className="overflow-hidden mb-8">
-                  <motion.h1 initial={{ y: "100%" }} animate={{ y: "0%" }} transition={{ duration: 0.9, delay: 0.46, ease: E }}
-                    style={{ fontFamily: SF, fontWeight: 700, fontSize: "clamp(28px,3.8vw,54px)", letterSpacing: "-0.03em", lineHeight: 1.0, color: C.sage }}>
-                    IN ANY COMPANY.
-                  </motion.h1>
-                </div>
-
-                <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.75 }}
-                  style={{ fontFamily: SF, fontWeight: 400, fontSize: 16, color: C.muted, lineHeight: 1.7, maxWidth: "52ch", marginBottom: 28 }}>
-                  Paste domains. Pick a pack —{" "}
-                  <span style={{ color: C.sage, fontWeight: 600 }}>SDR</span>,{" "}
-                  <span style={{ color: C.indigo, fontWeight: 600 }}>Recruiter</span>, or{" "}
-                  <span style={{ color: C.teal, fontWeight: 600 }}>VC</span>.
-                  Get pack-specific signals extracted in 60 seconds by stealth crawler.
+                <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}
+                  style={{ fontFamily: SF, fontSize: 18, color: C.muted, lineHeight: 1.55, maxWidth: "44ch", marginTop: 28 }}>
+                  Paste domains. Pick a pack. A stealth Hyperbrowser session opens, signals stream back, and you have what you need in under a minute.
                 </motion.p>
-
-                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }}
-                  className="flex items-center gap-3 flex-wrap">
-                  <a href="/app"
-                    style={{ fontFamily: SF, fontWeight: 600, fontSize: 14, color: "#F2EDE2", background: C.sage, padding: "11px 28px", borderRadius: 20, textDecoration: "none", transition: "all 0.15s" }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = C.sageMid; (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = C.sage; (e.currentTarget as HTMLElement).style.transform = ""; }}>
-                    Start extracting
-                  </a>
-                  <a href="#packs"
-                    style={{ fontFamily: SF, fontWeight: 500, fontSize: 14, color: C.muted, padding: "11px 20px", borderRadius: 20, textDecoration: "none", border: `1px solid ${C.border}`, transition: "all 0.15s" }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = C.text; (e.currentTarget as HTMLElement).style.borderColor = C.borderHi; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = C.muted; (e.currentTarget as HTMLElement).style.borderColor = C.border; }}>
-                    See the packs →
-                  </a>
-                </motion.div>
-
-                {/* inline stat strip */}
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.1 }}
-                  className="flex items-center gap-6 mt-10 pt-8 border-t" style={{ borderColor: C.border }}>
-                  {[{ v: "60s", l: "avg extract" }, { v: "3", l: "packs" }, { v: "10", l: "domains/run" }, { v: "25+", l: "signals" }].map(({ v, l }) => (
-                    <div key={l}>
-                      <div style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 26, color: C.text, lineHeight: 1, letterSpacing: "-0.02em" }}>{v}</div>
-                      <div style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.12em", marginTop: 2 }}>{l.toUpperCase()}</div>
-                    </div>
-                  ))}
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.85 }}
+                  className="flex items-center gap-3 mt-9">
+                  <PillButton primary href="/app">Start extracting →</PillButton>
+                  <PillButton href="#packs">See the packs</PillButton>
                 </motion.div>
               </div>
 
-              {/* terminal */}
-              <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 0.55, ease: E }}>
-                <Terminal />
-              </motion.div>
+              <div className="col-span-12 lg:col-span-5">
+                <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 0.55, ease: E }}>
+                  <Terminal />
+                </motion.div>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* ── TICKER ── */}
-        <div className="relative overflow-hidden border-y py-2.5" style={{ borderColor: C.border, background: C.surface }}>
-          <div className="absolute inset-0 pointer-events-none z-10"
-            style={{ background: `linear-gradient(to right, ${C.surface} 0%, transparent 6%, transparent 94%, ${C.surface} 100%)` }} />
-          <motion.div className="flex gap-12 whitespace-nowrap" animate={{ x: ["0%", "-50%"] }} transition={{ duration: 28, repeat: Infinity, ease: "linear" }}>
-            {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
-              <span key={i} className="inline-flex items-center gap-4 shrink-0">
-                <span style={{ fontFamily: MONO, fontSize: 10, color: C.dim, letterSpacing: "0.06em" }}>{item}</span>
-                <span style={{ color: C.sage, fontSize: 4 }}>◆</span>
+        {/* ── MARQUEE ── */}
+        <div className="overflow-hidden py-5" style={{ borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`, background: C.bgHi }}>
+          <motion.div className="flex gap-12 whitespace-nowrap" animate={{ x: ["0%", "-50%"] }} transition={{ duration: 32, repeat: Infinity, ease: "linear" }}>
+            {[...MARQUEE, ...MARQUEE, ...MARQUEE].map((d, i) => (
+              <span key={i} className="inline-flex items-center gap-12 shrink-0">
+                <span style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 22, color: C.muted, letterSpacing: "-0.01em" }}>{d}</span>
+                <span style={{ color: C.sage, fontSize: 5 }}>◆</span>
               </span>
             ))}
           </motion.div>
         </div>
 
-        {/* ── PACKS ── */}
-        <section className="py-20 lg:py-24" id="packs">
-          <div className="max-w-[1200px] mx-auto px-6 lg:px-12">
-            <div className="flex items-end justify-between mb-10 flex-wrap gap-4">
-              <div>
-                <div className="overflow-hidden">
-                  <motion.h2 initial={{ y: "100%" }} whileInView={{ y: "0%" }} viewport={{ once: true }}
-                    transition={{ duration: 0.8, ease: E }}
-                    style={{ fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, fontSize: "clamp(32px,4.5vw,60px)", letterSpacing: "-0.02em", lineHeight: 1.0, color: C.text }}>
-                    Same crawl.
-                  </motion.h2>
-                </div>
-                <div className="overflow-hidden">
-                  <motion.h2 initial={{ y: "100%" }} whileInView={{ y: "0%" }} viewport={{ once: true }}
-                    transition={{ duration: 0.8, delay: 0.07, ease: E }}
-                    style={{ fontFamily: SF, fontWeight: 700, fontSize: "clamp(32px,4.5vw,60px)", letterSpacing: "-0.03em", lineHeight: 1.0, color: C.sage }}>
-                    THREE LENSES.
-                  </motion.h2>
-                </div>
-              </div>
-              <motion.p initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
-                style={{ fontFamily: SF, fontSize: 14, color: C.muted, lineHeight: 1.7, maxWidth: "42ch", textAlign: "right" }}>
-                One stealth scrape. The pack determines which signals surface, which people get prioritised, and how the CSV exports.
-              </motion.p>
-            </div>
-
-            <div className="space-y-4">
-              {PACKS.map((pack, i) => <PackCard key={pack.id} pack={pack} index={i} />)}
-            </div>
-          </div>
-        </section>
-
-        {/* ── EDITORIAL BREAK ── */}
-        <section ref={breakRef} className="relative overflow-hidden" style={{ height: "55vh", minHeight: 320 }}>
-          <motion.div
-            initial={{ clipPath: "inset(0 0 100% 0)" }}
-            whileInView={{ clipPath: "inset(0 0 0% 0)" }}
-            viewport={{ once: true, margin: "-5%" }}
-            transition={{ duration: 1.3, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute inset-0">
-            <motion.img
-              src="https://images.unsplash.com/photo-1519751138087-5bf79df62d5b?w=2400&q=75&auto=format&fit=crop"
-              alt=""
-              style={{ y: breakY, width: "100%", height: "115%", objectFit: "cover", display: "block", top: "-7.5%", position: "absolute" }} />
-            <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(26,20,16,0.1) 0%, rgba(26,20,16,0.6) 100%)" }} />
-          </motion.div>
-          <div className="relative z-10 h-full flex flex-col justify-end px-6 lg:px-12 pb-12">
-            <div className="overflow-hidden">
-              <motion.h2 initial={{ y: "100%", opacity: 0 }} whileInView={{ y: "0%", opacity: 1 }}
-                viewport={{ once: true }} transition={{ duration: 1.0, delay: 0.5, ease: E }}
-                style={{ fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, fontSize: "clamp(40px,6vw,80px)", letterSpacing: "-0.025em", lineHeight: 0.95, color: "#F2EDE2", maxWidth: 700 }}>
-                Find the seam in any company.
-              </motion.h2>
-            </div>
-          </div>
-        </section>
-
-        {/* ── PROCESS ── */}
-        <section className="py-20 lg:py-24 border-t" id="process" style={{ borderColor: C.border }}>
-          <div className="max-w-[1200px] mx-auto px-6 lg:px-12">
-            <div className="flex items-end justify-between mb-10 flex-wrap gap-4">
-              <div>
-                <div className="overflow-hidden">
-                  <motion.h2 initial={{ y: "100%" }} whileInView={{ y: "0%" }} viewport={{ once: true }}
-                    transition={{ duration: 0.8, ease: E }}
-                    style={{ fontFamily: SF, fontWeight: 700, fontSize: "clamp(32px,4.5vw,60px)", letterSpacing: "-0.03em", lineHeight: 1.0, color: C.text }}>
-                    THREE STEPS.
-                  </motion.h2>
-                </div>
-                <div className="overflow-hidden">
-                  <motion.h2 initial={{ y: "100%" }} whileInView={{ y: "0%" }} viewport={{ once: true }}
-                    transition={{ duration: 0.8, delay: 0.07, ease: E }}
-                    style={{ fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, fontSize: "clamp(32px,4.5vw,60px)", letterSpacing: "-0.02em", lineHeight: 1.0, color: C.sage }}>
-                    Sixty seconds.
-                  </motion.h2>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {STEPS.map(({ n, title, body }, i) => (
-                <motion.div key={n}
-                  initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }} transition={{ duration: 0.5, delay: i * 0.09, ease: E }}
-                  className="rounded-xl p-6"
-                  style={{ background: C.surface, border: `1px solid ${C.border}` }}>
-                  <div className="flex items-start justify-between mb-4">
-                    <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.14em" }}>{n}</span>
-                    <span style={{ fontFamily: SF, fontWeight: 600, fontSize: 11, color: C.sage, background: C.sageLo, borderRadius: 12, padding: "3px 10px" }}>step {n}</span>
+        {/* ── PACKS — hyperbrowser-style 2x2 beveled cards ── */}
+        <section id="packs" className="pt-28 pb-24">
+          <div className="max-w-[1320px] mx-auto px-6 lg:px-10">
+            <div className="flex items-baseline justify-between mb-16 flex-wrap gap-4">
+              <h2 style={{ fontFamily: SF, fontWeight: 700, fontSize: "clamp(40px,5vw,72px)", letterSpacing: "-0.035em", lineHeight: 1, color: C.text }}>
+                Packs
+              </h2>
+              <div className="flex items-center gap-7">
+                {[["gold", "SDR"], ["indigo", "Recruiter"], ["sage", "VC"], ["sage", "MCP"]].map(([k, label]) => (
+                  <div key={label} className="flex items-center gap-2">
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: k === "sage" ? C.sage : k === "indigo" ? C.indigo : C.gold }} />
+                    <span style={{ fontFamily: MONO, fontSize: 12, color: C.muted, letterSpacing: "0.06em" }}>{label}</span>
                   </div>
-                  <h3 style={{ fontFamily: SF, fontWeight: 700, fontSize: 18, color: C.text, letterSpacing: "-0.02em", marginBottom: 8, lineHeight: 1.2 }}>{title}</h3>
-                  <p style={{ fontFamily: SF, fontWeight: 400, fontSize: 13, color: C.muted, lineHeight: 1.7 }}>{body}</p>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {FEATURES.map((f, i) => (
+                <motion.div key={f.id}
+                  initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-10%" }} transition={{ duration: 0.6, delay: (i % 2) * 0.08, ease: E }}>
+                  <BeveledCard accent={f.color} n={f.n}>
+                    <div className="p-7 lg:p-8 h-full flex flex-col">
+                      {/* icon square */}
+                      <div className="flex items-center justify-between mb-5">
+                        <div style={{ width: 40, height: 40, borderRadius: 8, border: `1px solid ${C.border}`, background: C.surfaceHi, display: "flex", alignItems: "center", justifyContent: "center", color: f.color, fontSize: 18 }}>
+                          {f.icon}
+                        </div>
+                        <span style={{ fontFamily: MONO, fontSize: 9, color: f.color, letterSpacing: "0.16em" }}>{f.label.toUpperCase()}</span>
+                      </div>
+
+                      <h3 style={{ fontFamily: SF, fontWeight: 700, fontSize: 30, color: C.textHi, letterSpacing: "-0.025em", lineHeight: 1.1, marginBottom: 14 }}>
+                        {f.title}
+                      </h3>
+                      <p style={{ fontFamily: SF, fontSize: 15, color: C.muted, lineHeight: 1.65, marginBottom: 24 }}>
+                        {f.body}
+                      </p>
+
+                      <div className="flex flex-wrap gap-2 mb-5">
+                        {f.tags.map(tag => (
+                          <span key={tag} style={{
+                            fontFamily: MONO, fontSize: 11, color: C.text,
+                            background: C.surfaceHi, border: `1px solid ${C.border}`,
+                            borderRadius: 6, padding: "5px 10px", letterSpacing: "0.02em",
+                          }}>{tag}</span>
+                        ))}
+                      </div>
+
+                      <div className="mt-auto pt-4" style={{ borderTop: `1px dashed ${C.border}` }}>
+                        <span style={{ fontFamily: MONO, fontSize: 10, color: C.dim, letterSpacing: "0.12em" }}>SAMPLE</span>
+                        <div style={{ fontFamily: MONO, fontSize: 12, color: C.text, marginTop: 4 }}>{f.sample}</div>
+                      </div>
+                    </div>
+                  </BeveledCard>
                 </motion.div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* ── MCP ── */}
-        <section className="py-20 lg:py-24 border-t" id="mcp" style={{ borderColor: C.border, background: C.surface }}>
-          <div className="max-w-[1200px] mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-12 lg:gap-20 items-start">
-            <div>
-              <div className="overflow-hidden mb-2">
-                <motion.h2 initial={{ y: "100%" }} whileInView={{ y: "0%" }} viewport={{ once: true }}
-                  transition={{ duration: 0.8, ease: E }}
-                  style={{ fontFamily: SF, fontWeight: 700, fontSize: "clamp(28px,4vw,52px)", letterSpacing: "-0.03em", lineHeight: 1.0, color: C.text }}>
-                  RUNS INSIDE
-                </motion.h2>
+        {/* ── PROCESS ── */}
+        <section id="process" className="pt-12 pb-24" style={{ borderTop: `1px solid ${C.border}` }}>
+          <div className="max-w-[1320px] mx-auto px-6 lg:px-10 pt-20">
+            <div className="grid grid-cols-12 gap-6 mb-14">
+              <div className="col-span-12 lg:col-span-5">
+                <span style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.22em" }}>§ PROCESS</span>
+                <h2 className="mt-3" style={{ fontFamily: SF, fontWeight: 700, fontSize: "clamp(40px,5vw,72px)", letterSpacing: "-0.035em", lineHeight: 1, color: C.text }}>
+                  Three steps.<br /><span style={{ color: C.sage }}>Sixty seconds.</span>
+                </h2>
               </div>
-              <div className="overflow-hidden mb-8">
-                <motion.h2 initial={{ y: "100%" }} whileInView={{ y: "0%" }} viewport={{ once: true }}
-                  transition={{ duration: 0.8, delay: 0.07, ease: E }}
-                  style={{ fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, fontSize: "clamp(28px,4vw,52px)", letterSpacing: "-0.02em", lineHeight: 1.0, color: C.indigo }}>
-                  Claude + Cursor.
-                </motion.h2>
-              </div>
-              <p style={{ fontFamily: SF, fontSize: 15, color: C.muted, lineHeight: 1.75, marginBottom: 20 }}>
-                Seam ships as a JSON-RPC 2.0 MCP server. Add one config block and call{" "}
-                <code style={{ fontFamily: MONO, fontSize: 11, color: C.text, background: C.surfaceHi, padding: "2px 5px", borderRadius: 3, border: `1px solid ${C.border}` }}>enrich_companies</code>{" "}
-                inline — no context switch.
-              </p>
-              <div className="space-y-0" style={{ borderTop: `1px solid ${C.border}` }}>
-                {["enrich_companies(domains[], pack)", "list_packs()"].map(name => (
-                  <div key={name} className="flex items-center gap-3 py-3" style={{ borderBottom: `1px solid ${C.border}` }}>
-                    <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: "0.1em", color: C.indigo, background: C.indigoDim, borderRadius: 2, padding: "3px 8px" }}>TOOL</span>
-                    <code style={{ fontFamily: MONO, fontSize: 11, color: C.muted }}>{name}</code>
-                  </div>
-                ))}
+              <div className="col-span-12 lg:col-span-7 lg:pt-12">
+                <p style={{ fontFamily: SF, fontSize: 17, color: C.muted, lineHeight: 1.65, maxWidth: "52ch" }}>
+                  No setup, no API keys, no waiting on a sales rep. Open the app, drop in a list of domains, pick a pack, and watch the seam open.
+                </p>
               </div>
             </div>
 
-            <motion.div initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-              transition={{ duration: 0.7, delay: 0.1, ease: E }}
-              className="rounded-xl overflow-hidden"
-              style={{ background: C.term, border: `1px solid ${C.termBdr}`, boxShadow: `0 24px 48px rgba(23,19,16,0.18)` }}>
-              <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: C.termBdr }}>
-                <div className="flex gap-1.5">{[0,1,2].map(i => <div key={i} className="w-2.5 h-2.5 rounded-full" style={{ background: "#342E28" }} />)}</div>
-                <span style={{ fontFamily: MONO, fontSize: 9, color: C.termDim, letterSpacing: "0.1em" }}>CLAUDE_DESKTOP_CONFIG.JSON</span>
-                <CopyButton text={MCP_CONFIG} />
+            <ol className="space-y-0">
+              {STEPS.map((s, i) => (
+                <motion.li key={s.n}
+                  initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }} transition={{ duration: 0.6, delay: i * 0.06, ease: E }}
+                  className="grid grid-cols-12 gap-6 py-10 lg:py-12 items-baseline"
+                  style={{ borderTop: `1px solid ${C.border}`, listStyle: "none" }}>
+                  <div className="col-span-3 lg:col-span-2">
+                    <span style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: "clamp(48px,7vw,108px)", color: C.sage, lineHeight: 0.85, letterSpacing: "-0.03em", fontWeight: 400 }}>
+                      {s.n}
+                    </span>
+                  </div>
+                  <div className="col-span-9 lg:col-span-6">
+                    <h3 style={{ fontFamily: SF, fontWeight: 700, fontSize: "clamp(24px,3vw,38px)", color: C.textHi, letterSpacing: "-0.025em", lineHeight: 1.15 }}>
+                      {s.title}
+                    </h3>
+                  </div>
+                  <div className="col-span-12 lg:col-span-4 lg:pt-2">
+                    <p style={{ fontFamily: SF, fontSize: 15, color: C.muted, lineHeight: 1.7 }}>{s.body}</p>
+                  </div>
+                </motion.li>
+              ))}
+              <li style={{ borderTop: `1px solid ${C.border}`, listStyle: "none" }} />
+            </ol>
+          </div>
+        </section>
+
+        {/* ── MCP ── */}
+        <section id="mcp" className="py-24" style={{ borderTop: `1px solid ${C.border}`, background: C.bgHi }}>
+          <div className="max-w-[1320px] mx-auto px-6 lg:px-10">
+            <div className="grid grid-cols-12 gap-6 mb-14">
+              <div className="col-span-12 lg:col-span-7">
+                <span style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.22em" }}>§ MCP NATIVE</span>
+                <h2 className="mt-3" style={{ fontFamily: SF, fontWeight: 700, fontSize: "clamp(40px,5vw,72px)", letterSpacing: "-0.035em", lineHeight: 1, color: C.text }}>
+                  Lives inside <span style={{ fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, color: C.indigo }}>Claude.</span>
+                </h2>
+                <p style={{ fontFamily: SF, fontSize: 17, color: C.muted, lineHeight: 1.65, maxWidth: "52ch", marginTop: 22 }}>
+                  Seam ships as a JSON-RPC 2.0 MCP server. Add the config block, then ask Claude in plain English. No copy-paste from one tab to another.
+                </p>
               </div>
-              <pre style={{ fontFamily: MONO, fontSize: 12, lineHeight: 1.85, color: "#BDB8AA", padding: "20px 24px", margin: 0 }}>
-                <span style={{ color: C.termDim }}>{"{"}</span>{"\n"}
-                {"  "}<span style={{ color: C.indigo }}>&quot;mcpServers&quot;</span><span style={{ color: C.termDim }}>: {"{"}</span>{"\n"}
-                {"    "}<span style={{ color: C.indigo }}>&quot;seam&quot;</span><span style={{ color: C.termDim }}>: {"{"}</span>{"\n"}
-                {"      "}<span style={{ color: "#7A9C6A" }}>&quot;command&quot;</span><span style={{ color: C.termDim }}>:</span>{" "}<span style={{ color: C.sage }}>&quot;npx&quot;</span><span style={{ color: C.termDim }}>,</span>{"\n"}
-                {"      "}<span style={{ color: "#7A9C6A" }}>&quot;args&quot;</span><span style={{ color: C.termDim }}>: [</span>{"\n"}
-                {"        "}<span style={{ color: C.sage }}>&quot;mcp-remote&quot;</span><span style={{ color: C.termDim }}>,</span>{"\n"}
-                {"        "}<span style={{ color: C.sage }}>&quot;https://jstack-omega.vercel.app/api/mcp&quot;</span>{"\n"}
-                {"      "}<span style={{ color: C.termDim }}>]</span>{"\n"}
-                {"    "}<span style={{ color: C.termDim }}>{"}"}</span>{"\n"}
-                {"  "}<span style={{ color: C.termDim }}>{"}"}</span>{"\n"}
-                <span style={{ color: C.termDim }}>{"}"}</span>
-              </pre>
-              <div className="px-5 py-3.5 border-t" style={{ borderColor: C.termBdr }}>
-                <span style={{ fontFamily: MONO, fontSize: 9, color: C.termDim, letterSpacing: "0.1em" }}>THEN IN CLAUDE</span>
-                <div style={{ fontFamily: MONO, fontSize: 12, color: C.sage, marginTop: 5 }}>&gt; extract stripe.com and linear.app with the SDR pack</div>
+              <div className="col-span-12 lg:col-span-5 lg:pt-12">
+                <div style={{ fontFamily: MONO, fontSize: 10, color: C.dim, letterSpacing: "0.18em", marginBottom: 14 }}>EXPOSED TOOLS</div>
+                <div className="space-y-3">
+                  <div className="flex items-baseline gap-3">
+                    <span style={{ fontFamily: MONO, fontSize: 9, color: C.indigo, background: C.indigoDim, border: `1px solid ${C.indigo}30`, borderRadius: 4, padding: "3px 8px", letterSpacing: "0.12em" }}>TOOL</span>
+                    <code style={{ fontFamily: MONO, fontSize: 13, color: C.text }}>enrich_companies(<span style={{ color: C.sage }}>domains</span>, <span style={{ color: C.sage }}>pack</span>)</code>
+                  </div>
+                  <div className="flex items-baseline gap-3">
+                    <span style={{ fontFamily: MONO, fontSize: 9, color: C.indigo, background: C.indigoDim, border: `1px solid ${C.indigo}30`, borderRadius: 4, padding: "3px 8px", letterSpacing: "0.12em" }}>TOOL</span>
+                    <code style={{ fontFamily: MONO, fontSize: 13, color: C.text }}>list_packs()</code>
+                  </div>
+                </div>
               </div>
+            </div>
+
+            <motion.div initial={{ opacity: 0, y: 14 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+              transition={{ duration: 0.7, ease: E }}>
+              <BeveledCard>
+                <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: `1px solid ${C.border}` }}>
+                  <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.16em" }}>~/.config/claude/claude_desktop_config.json</span>
+                  <CopyButton text={MCP_CONFIG} />
+                </div>
+                <pre style={{ fontFamily: MONO, fontSize: 13, lineHeight: 1.85, color: C.muted, padding: "24px 28px", margin: 0 }}>
+                  <span style={{ color: C.dim }}>{"{"}</span>{"\n"}
+                  {"  "}<span style={{ color: C.indigo }}>&quot;mcpServers&quot;</span><span style={{ color: C.dim }}>: {"{"}</span>{"\n"}
+                  {"    "}<span style={{ color: C.indigo }}>&quot;seam&quot;</span><span style={{ color: C.dim }}>: {"{"}</span>{"\n"}
+                  {"      "}<span style={{ color: C.gold }}>&quot;command&quot;</span><span style={{ color: C.dim }}>:</span>{" "}<span style={{ color: C.sage }}>&quot;npx&quot;</span><span style={{ color: C.dim }}>,</span>{"\n"}
+                  {"      "}<span style={{ color: C.gold }}>&quot;args&quot;</span><span style={{ color: C.dim }}>: [</span>{"\n"}
+                  {"        "}<span style={{ color: C.sage }}>&quot;mcp-remote&quot;</span><span style={{ color: C.dim }}>,</span>{"\n"}
+                  {"        "}<span style={{ color: C.sage }}>&quot;https://jstack-omega.vercel.app/api/mcp&quot;</span>{"\n"}
+                  {"      "}<span style={{ color: C.dim }}>]</span>{"\n"}
+                  {"    "}<span style={{ color: C.dim }}>{"}"}</span>{"\n"}
+                  {"  "}<span style={{ color: C.dim }}>{"}"}</span>{"\n"}
+                  <span style={{ color: C.dim }}>{"}"}</span>
+                </pre>
+                <div className="px-5 py-4" style={{ borderTop: `1px solid ${C.border}` }}>
+                  <div style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.16em", marginBottom: 6 }}>THEN ASK CLAUDE</div>
+                  <div style={{ fontFamily: MONO, fontSize: 13, color: C.sage }}>&gt; extract stripe.com and linear.app with the SDR pack</div>
+                </div>
+              </BeveledCard>
             </motion.div>
           </div>
         </section>
 
-        {/* ── CTA ── */}
-        <section className="py-24 lg:py-32 border-t" style={{ borderColor: C.border }}>
-          <div className="max-w-[1200px] mx-auto px-6 lg:px-12">
-            <div className="overflow-hidden mb-1">
+        {/* ── CTA — ASCII globe background ── */}
+        <section className="relative overflow-hidden py-32 lg:py-40" style={{ borderTop: `1px solid ${C.border}` }}>
+          {/* ASCII globe */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <pre aria-hidden style={{
+              fontFamily: MONO, fontSize: "clamp(7px, 0.9vw, 11px)",
+              lineHeight: 1, color: C.faint, opacity: 0.7,
+              whiteSpace: "pre", textAlign: "center",
+              transform: "translateY(-5%)",
+            }}>{ASCII_GLOBE}</pre>
+          </div>
+
+          <div className="relative max-w-[1320px] mx-auto px-6 lg:px-10">
+            <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.2 }}
+              className="inline-flex items-center gap-2 mb-8"
+              style={{ background: C.sageDim, border: `1px solid ${C.sage}30`, borderRadius: 999, padding: "5px 12px 5px 10px" }}>
+              <motion.div style={{ width: 6, height: 6, borderRadius: "50%", background: C.sage }}
+                animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 2, repeat: Infinity }} />
+              <span style={{ fontFamily: MONO, fontSize: 10, color: C.sage, letterSpacing: "0.18em" }}>INFRASTRUCTURE ONLINE</span>
+            </motion.div>
+
+            <div className="overflow-hidden">
               <motion.h2 initial={{ y: "100%" }} whileInView={{ y: "0%" }} viewport={{ once: true }}
-                transition={{ duration: 0.9, ease: E }}
-                style={{ fontFamily: SERIF, fontStyle: "italic", fontWeight: 400, fontSize: "clamp(52px,8vw,112px)", letterSpacing: "-0.025em", lineHeight: 0.9, color: C.text }}>
-                Stop guessing.
+                transition={{ duration: 0.95, ease: E }}
+                style={{ fontFamily: SF, fontWeight: 700, fontSize: "clamp(56px,9vw,140px)", letterSpacing: "-0.045em", lineHeight: 0.92, color: C.textHi }}>
+                Ready to scrape?
               </motion.h2>
             </div>
-            <div className="overflow-hidden mb-12">
-              <motion.h2 initial={{ y: "100%" }} whileInView={{ y: "0%" }} viewport={{ once: true }}
-                transition={{ duration: 0.9, delay: 0.08, ease: E }}
-                style={{ fontFamily: SF, fontWeight: 700, fontSize: "clamp(52px,8vw,112px)", letterSpacing: "-0.04em", lineHeight: 0.9, color: C.sage }}>
-                START KNOWING.
-              </motion.h2>
-            </div>
-            <motion.div initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="flex items-center gap-4 flex-wrap">
-              <a href="/app"
-                style={{ fontFamily: SF, fontWeight: 700, fontSize: 15, color: "#F2EDE2", background: C.sage, padding: "14px 36px", borderRadius: 20, textDecoration: "none", letterSpacing: "0.01em", transition: "all 0.15s" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = C.sageMid; (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = C.sage; (e.currentTarget as HTMLElement).style.transform = ""; }}>
-                Open Seam — free
-              </a>
-              <span style={{ fontFamily: SF, fontSize: 14, color: C.dim }}>Three packs. Sixty seconds. Every company.</span>
+            <motion.p initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.3 }}
+              style={{ fontFamily: SF, fontSize: 18, color: C.muted, lineHeight: 1.55, maxWidth: "44ch", marginTop: 24 }}>
+              Stealth-powered B2B intelligence. Three packs. Sixty seconds. No signup.
+            </motion.p>
+            <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.45 }}
+              className="mt-9">
+              <PillButton primary href="/app">Start for free →</PillButton>
             </motion.div>
           </div>
         </section>
 
         {/* ── FOOTER ── */}
-        <footer className="py-8 border-t" style={{ borderColor: C.border, background: C.surface }}>
-          <div className="max-w-[1200px] mx-auto px-6 lg:px-12 flex flex-col md:flex-row items-center justify-between gap-3">
-            <span style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 18, color: C.text, letterSpacing: "-0.01em" }}>
-              Seam<span style={{ color: C.sage }}>·</span>
-            </span>
-            <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.1em" }}>STEALTH-POWERED BY HYPERBROWSER</span>
-            <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.08em" }}>© 2026 SEAM</span>
+        <footer className="py-10" style={{ borderTop: `1px solid ${C.border}`, background: C.bgHi }}>
+          <div className="max-w-[1320px] mx-auto px-6 lg:px-10 grid grid-cols-12 gap-6 items-baseline">
+            <div className="col-span-6 lg:col-span-3">
+              <a href="/" className="flex items-baseline gap-1" style={{ textDecoration: "none" }}>
+                <span style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 22, color: C.text, letterSpacing: "-0.01em" }}>Seam</span>
+                <span style={{ color: C.sage, fontSize: 11 }}>·</span>
+              </a>
+            </div>
+            <div className="col-span-6 lg:col-span-3 text-right lg:text-left">
+              <span style={{ fontFamily: MONO, fontSize: 10, color: C.dim, letterSpacing: "0.16em" }}>STEALTH-POWERED BY HYPERBROWSER</span>
+            </div>
+            <div className="col-span-6 lg:col-span-3 hidden lg:block">
+              <span style={{ fontFamily: SF, fontSize: 12, color: C.muted, fontStyle: "italic" }}>Intelligence runs deep.</span>
+            </div>
+            <div className="col-span-6 lg:col-span-3 text-right">
+              <span style={{ fontFamily: MONO, fontSize: 10, color: C.dim, letterSpacing: "0.14em" }}>© 2026 SEAM</span>
+            </div>
           </div>
         </footer>
       </div>

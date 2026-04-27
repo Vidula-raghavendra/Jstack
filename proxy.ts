@@ -16,7 +16,7 @@ function getIp(req: NextRequest): string {
   );
 }
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const res = NextResponse.next();
 
   // ── Security headers ──────────────────────────────────────────────────────
@@ -32,17 +32,33 @@ export function middleware(req: NextRequest) {
     "Content-Security-Policy",
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",  // Next.js requires unsafe-inline/eval in dev
+      "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: https://www.google.com",       // favicon fetcher
+      "img-src 'self' data: https://www.google.com",
       "connect-src 'self'",
+      // Allow Hyperbrowser live session iframes
+      "frame-src https://*.hyperbrowser.ai https://hyperbrowser.ai",
       "frame-ancestors 'none'",
     ].join("; ")
   );
 
+  const path = req.nextUrl.pathname;
+
+  // ── Same-origin guard on enrich + forge (not MCP — it's a public API server) ──
+  if (path.startsWith("/api/enrich") || path.startsWith("/api/forge")) {
+    const origin = req.headers.get("origin");
+    const host = req.headers.get("host");
+    if (origin && host) {
+      const originHost = origin.replace(/^https?:\/\//, "");
+      if (originHost !== host) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+  }
+
   // ── Rate limiting on API routes ───────────────────────────────────────────
-  if (req.nextUrl.pathname.startsWith("/api/enrich") || req.nextUrl.pathname.startsWith("/api/mcp")) {
+  if (path.startsWith("/api/enrich") || path.startsWith("/api/mcp")) {
     const ip = getIp(req);
     const now = Date.now();
     const entry = rateLimitMap.get(ip);

@@ -170,7 +170,7 @@ async function captureVisualIntel(domain: string, pack: Pack): Promise<VisualInt
     if (!screenshot) return null;
 
     const response = await claude.messages.create({
-      model: "claude-opus-4-7-20251101",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 1024,
       messages: [{
         role: "user",
@@ -264,7 +264,7 @@ async function enrichDomain(domain: string, pack: Pack, onLiveUrl?: (url: string
   }
 
   const structureResponse = await claude.messages.create({
-    model: "claude-opus-4-7-20251101",
+    model: "claude-haiku-4-5-20251001",
     max_tokens: 4096,
     messages: [{
       role: "user",

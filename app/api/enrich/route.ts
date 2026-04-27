@@ -153,6 +153,37 @@ export interface EnrichResult {
   scrapedAt?: string;
 }
 
+/* ── Hyperbrowser-native extract (no LLM required) ──────────────────── */
+async function enrichWithExtract(domain: string, pack: Pack): Promise<EnrichResult> {
+  const clean = normalizeDomain(domain);
+  const cfg = PACK_CONFIG[pack];
+
+  const baseUrls = [
+    `https://${clean}`, `https://${clean}/about`, `https://${clean}/team`,
+    `https://${clean}/careers`, `https://${clean}/jobs`, `https://${clean}/leadership`,
+  ];
+
+  try {
+    const result = await hb.extract.startAndWait({
+      urls: [...baseUrls, ...cfg.extraUrls(clean)],
+      prompt: `Extract a comprehensive company intelligence profile. ${cfg.focus}
+For "people": collect every person on team/about/leadership pages. Include name (required), role, full LinkedIn URL if publicly linked, public email/Twitter if shown. Never invent URLs.
+For "signals": populate ALL three arrays with 3-6 concrete, actionable items each.`,
+      schema: CompanyProfileSchema,
+      sessionOptions: { useStealth: true },
+    });
+
+    if (result.status !== "completed" || !result.data) {
+      return { domain: clean, status: "error", pack, error: result.error ?? "Extract failed" };
+    }
+
+    const profile = CompanyProfileSchema.parse(result.data);
+    return { domain: clean, status: "ok", pack, profile, scrapedAt: new Date().toISOString() };
+  } catch {
+    return { domain: clean, status: "error", pack, error: "Schema validation failed" };
+  }
+}
+
 /* ── Visual intelligence capture ─────────────────────────────────────── */
 async function captureVisualIntel(domain: string, pack: Pack): Promise<VisualIntel | null> {
   if (!claude) return null;
@@ -225,6 +256,9 @@ Return a detailed research report with all findings.`,
 
 /* ── Main enrichment ─────────────────────────────────────────────────── */
 async function enrichDomain(domain: string, pack: Pack, onLiveUrl?: (url: string) => void): Promise<EnrichResult> {
+  // Without Claude, fall back to Hyperbrowser's native extract (no LLM required)
+  if (!claude) return enrichWithExtract(domain, pack);
+
   const clean = domain.replace(/^https?:\/\//, "").replace(/\/$/, "");
   const cfg = PACK_CONFIG[pack];
 
@@ -259,10 +293,6 @@ async function enrichDomain(domain: string, pack: Pack, onLiveUrl?: (url: string
   }
 
   // Parse the agent's free-text research report into structured profile via Claude
-  if (!claude) {
-    return { domain: clean, status: "error", pack, error: "ANTHROPIC_API_KEY required for structured extraction" };
-  }
-
   const structureResponse = await claude.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 4096,

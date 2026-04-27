@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import type { CompanyProfile, EnrichResult, Pack, VisualIntel } from "../api/enrich/route";
+import type { ProspectProfile, ProspectResult } from "../api/prospect/route";
 
 /* ─── Seam app tokens — warm light bg + gold/green accents ─── */
 const SERIF = "'Bodoni Moda', Georgia, serif";
@@ -20,7 +21,8 @@ const C = {
   muted:    "#7A7168",
   dim:      "#3D3A32",
   gold:     "#C9A96E",
-  goldLo:   "rgba(201,169,110,0.10)",
+  goldLo:     "rgba(201,169,110,0.10)",
+  goldBorder: "rgba(201,169,110,0.25)",
   green:    "#7EA88A",   // sage from DESIGN.md — VC
   greenLo:  "rgba(126,168,138,0.10)",
   sage:     "#7EA88A",
@@ -64,6 +66,21 @@ const PACK_PRESETS: Record<Pack, string[]> = {
   recruiter: ["openai.com", "anthropic.com", "perplexity.ai", "cursor.com", "supabase.com", "modal.com"],
   vc:        ["browserbase.com", "hyperbrowser.ai", "browser-use.com", "elevenlabs.io", "windsurf.com", "rerun.io"],
 };
+
+interface ProspectRow {
+  domain:    string;
+  state:     "pending" | "loading" | "ok" | "error";
+  prospect?: ProspectProfile;
+  error?:    string;
+}
+
+const DISCOVER_REPOS = [
+  { id: "microsoft/playwright",   label: "Playwright",   desc: "Microsoft's browser testing framework" },
+  { id: "browserbase/stagehand",  label: "Stagehand",    desc: "Browserbase's AI browser SDK" },
+  { id: "browser-use/browser-use",label: "Browser Use",  desc: "AI agent browser framework" },
+  { id: "steel-dev/steel-browser",label: "Steel",        desc: "Open-source browser API" },
+  { id: "apify/crawlee",          label: "Crawlee",      desc: "Apify's web scraping SDK" },
+];
 
 const VELOCITY_CONFIG: Record<string, { label: string; bars: number }> = {
   none:       { label: "Not hiring",     bars: 0 },
@@ -164,6 +181,7 @@ function exportToCSV(rows: Row[], pack: Pack) {
 }
 
 export default function AppPage() {
+  const [mode, setMode]                 = useState<"enrich" | "discover">("enrich");
   const [input, setInput]               = useState("");
   const [rows, setRows]                 = useState<Row[]>([]);
   const [running, setRunning]           = useState(false);
@@ -173,6 +191,10 @@ export default function AppPage() {
   const [history, setHistory]           = useState<HistoryEntry[]>([]);
   const [activeHistoryId, setActiveHistoryId] = useState<string|null>(null);
   const [pack, setPack]                 = useState<Pack>("sdr");
+  // Discover mode state
+  const [prospectRows, setProspectRows] = useState<ProspectRow[]>([]);
+  const [selectedRepos, setSelectedRepos] = useState<string[]>(["browser-use/browser-use", "browserbase/stagehand"]);
+  const [repoStatus, setRepoStatus]     = useState<Record<string, string>>({});
   const abortRef = useRef<AbortController|null>(null);
 
   const packCfg = PACKS.find(p => p.id === pack)!;
@@ -238,6 +260,49 @@ export default function AppPage() {
     finally { setRunning(false); }
   }
 
+  async function runDiscover() {
+    if (!selectedRepos.length || running) return;
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
+    setRunning(true);
+    setProspectRows([]);
+    setRepoStatus({});
+    try {
+      const res = await fetch("/api/prospect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ repos: selectedRepos, maxPerRepo: 5 }),
+        signal: abortRef.current.signal,
+      });
+      if (!res.body) throw new Error("No stream");
+      const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = "";
+      let pRows: ProspectRow[] = [];
+      while (true) {
+        const { done, value } = await reader.read(); if (done) break;
+        buf += dec.decode(value, { stream: true }); const lines = buf.split("\n"); buf = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          type PEvent =
+            | { event: "repo"; repo: string; status: string; userCount?: number }
+            | { event: "prospect_started"; domain: string }
+            | (ProspectResult & { event: "prospect_result" })
+            | { event: "done" };
+          const payload = JSON.parse(line.slice(6)) as PEvent;
+          if (payload.event === "repo") {
+            setRepoStatus(prev => ({ ...prev, [payload.repo]: payload.status === "done" ? `✓ ${payload.userCount ?? 0} users` : "Scraping stargazers…" }));
+          } else if (payload.event === "prospect_started") {
+            pRows = [...pRows, { domain: payload.domain, state: "loading" }];
+            setProspectRows([...pRows]);
+          } else if (payload.event === "prospect_result") {
+            pRows = pRows.map(r => r.domain === payload.domain ? { ...r, state: payload.status, prospect: payload.prospect, error: payload.error } : r);
+            setProspectRows([...pRows]);
+          }
+        }
+      }
+    } catch (e) { if ((e as Error).name !== "AbortError") console.error(e); }
+    finally { setRunning(false); }
+  }
+
   const velOrder = { aggressive: 0, steady: 1, slow: 2, none: 3 };
   const filteredRows = rows
     .filter(r => { if (!filter) return true; const q = filter.toLowerCase(); return r.domain.includes(q) || r.profile?.name?.toLowerCase().includes(q) || r.profile?.productCategory?.toLowerCase().includes(q) || r.profile?.techStack?.some(t => t.toLowerCase().includes(q)) || r.profile?.customers?.toLowerCase().includes(q); })
@@ -258,18 +323,39 @@ export default function AppPage() {
           Seam<span style={{ color: C.gold, fontSize: 8, marginLeft: 1, marginBottom: 2 }}>●</span>
         </Link>
         <div className="flex items-center gap-3">
-          {rows.some(r => r.state === "ok") && (
+          {/* Mode toggle */}
+          <div className="flex items-center rounded-lg overflow-hidden" style={{ border: `1px solid ${C.border}` }}>
+            {(["enrich", "discover"] as const).map(m => (
+              <button key={m} onClick={() => { if (!running) setMode(m); }}
+                disabled={running}
+                style={{
+                  fontFamily: MONO, fontSize: 11, padding: "6px 14px",
+                  background: mode === m ? C.card : "transparent",
+                  color: mode === m ? C.text : C.dim,
+                  borderRight: m === "enrich" ? `1px solid ${C.border}` : "none",
+                }}
+                className="transition-colors disabled:cursor-not-allowed capitalize">
+                {m === "discover" ? "⚡ Discover" : "◎ Enrich"}
+              </button>
+            ))}
+          </div>
+          <Link href="/connect"
+            style={{ fontFamily: MONO, fontSize: 11, color: C.muted, border: `1px solid ${C.border}` }}
+            className="px-3 py-1.5 rounded-lg hover:border-[#C9A96E] hover:text-[#C9A96E] transition-all hidden sm:block">
+            MCP Connect ↗
+          </Link>
+          {mode === "enrich" && rows.some(r => r.state === "ok") && (
             <button onClick={() => exportToCSV(rows, pack)}
               style={{ fontFamily: MONO, fontSize: 11, color: C.muted, border: `1px solid ${C.border}` }}
               className="px-3 py-1.5 rounded-lg hover:border-[#C8C2B8] hover:text-[#1A1714] transition-all">
-              Export {pack.toUpperCase()} CSV ↓
+              Export CSV ↓
             </button>
           )}
           {running && (
             <span style={{ fontFamily: MONO, fontSize: 11, color: C.gold }} className="flex items-center gap-1.5">
               <motion.span className="w-[5px] h-[5px] rounded-full inline-block" style={{ background: C.gold }}
                 animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 1, repeat: Infinity }} />
-              {doneCount}/{rows.length} done
+              running
             </span>
           )}
         </div>
@@ -313,6 +399,139 @@ export default function AppPage() {
 
         {/* Main */}
         <main className="flex-1 overflow-y-auto p-6 space-y-5">
+
+          {/* ── Discover mode ── */}
+          {mode === "discover" && (
+            <div className="space-y-5">
+              <div className="rounded-xl p-5 space-y-4" style={{ background: C.card, border: `1px solid ${C.border}` }}>
+                <div>
+                  <p style={{ fontFamily: MONO, fontSize: 10, color: C.gold, letterSpacing: "0.18em" }} className="uppercase mb-1">⚡ Prospect Discovery</p>
+                  <p style={{ fontSize: 13, color: C.muted, lineHeight: 1.6 }}>
+                    Scrapes stargazers from browser-automation repos on GitHub via Hyperbrowser, enriches each company, and scores them as potential Hyperbrowser customers.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <p style={{ fontFamily: MONO, fontSize: 11, color: C.muted }}>Select repos to mine:</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {DISCOVER_REPOS.map(repo => {
+                      const active = selectedRepos.includes(repo.id);
+                      const status = repoStatus[repo.id];
+                      return (
+                        <button key={repo.id} disabled={running}
+                          onClick={() => setSelectedRepos(prev => active ? prev.filter(r => r !== repo.id) : [...prev, repo.id])}
+                          className="text-left rounded-xl px-4 py-3 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{ background: active ? C.surface : "transparent", border: `1px solid ${active ? C.goldBorder : C.border}` }}>
+                          <div className="flex items-center justify-between">
+                            <span style={{ fontSize: 13, fontWeight: 600, color: active ? C.text : C.muted }}>{repo.label}</span>
+                            {status && <span style={{ fontFamily: MONO, fontSize: 10, color: C.sage }}>{status}</span>}
+                          </div>
+                          <p style={{ fontFamily: MONO, fontSize: 10, color: C.dim, marginTop: 2 }}>{repo.id}</p>
+                          <p style={{ fontSize: 11, color: C.dim, marginTop: 1 }}>{repo.desc}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <button onClick={runDiscover} disabled={running || !selectedRepos.length}
+                  style={{ background: C.gold, color: "#1A1714", fontFamily: SANS, fontWeight: 600, fontSize: 13 }}
+                  className="px-6 py-2.5 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:-translate-y-px">
+                  {running ? "Discovering…" : `Find prospects →`}
+                </button>
+              </div>
+
+              {/* Prospect results */}
+              {prospectRows.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p style={{ fontFamily: MONO, fontSize: 11, color: C.muted }}>{prospectRows.filter(r => r.state === "ok").length} prospects found</p>
+                    {prospectRows.some(r => r.state === "ok") && (
+                      <button onClick={() => {
+                        const rows = prospectRows.filter(r => r.state === "ok" && r.prospect);
+                        const headers = ["Domain","Company","Score","Reasons","Tech Stack","Roles","Velocity","Funding","Source Repo"];
+                        const csv = [headers, ...rows.map(r => {
+                          const p = r.prospect!;
+                          return [r.domain, p.companyName ?? "", p.score, p.scoreReasons.join("; "), p.techStack.join("; "), p.openRoles.join("; "), p.hiringVelocity, p.fundingStage ?? "", p.sourceRepo ?? ""];
+                        })].map(row => row.map(c => `"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
+                        const blob = new Blob([csv], { type: "text/csv" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a"); a.href = url; a.download = "seam-prospects.csv"; a.click();
+                        URL.revokeObjectURL(url);
+                      }} style={{ fontFamily: MONO, fontSize: 11, color: C.muted, border: `1px solid ${C.border}` }}
+                        className="px-3 py-1.5 rounded-lg hover:border-[#C9A96E] hover:text-[#C9A96E] transition-all">
+                        Export CSV ↓
+                      </button>
+                    )}
+                  </div>
+                  {[...prospectRows].sort((a, b) => (b.prospect?.score ?? 0) - (a.prospect?.score ?? 0)).map(row => (
+                    <div key={row.domain} className="rounded-xl p-4 space-y-2" style={{ background: C.card, border: `1px solid ${row.state === "loading" ? C.border : row.prospect && row.prospect.score >= 50 ? C.goldBorder : C.border}` }}>
+                      {row.state === "loading" && (
+                        <div className="flex items-center gap-2">
+                          <motion.span className="w-[5px] h-[5px] rounded-full" style={{ background: C.gold }}
+                            animate={{ scale: [1, 1.5, 1] }} transition={{ duration: 1, repeat: Infinity }} />
+                          <span style={{ fontFamily: MONO, fontSize: 12, color: C.muted }}>{row.domain}</span>
+                        </div>
+                      )}
+                      {row.state === "error" && (
+                        <div className="flex items-center gap-2">
+                          <span style={{ fontFamily: MONO, fontSize: 12, color: "#C87070" }}>✗ {row.domain}</span>
+                          <span style={{ fontFamily: MONO, fontSize: 11, color: C.dim }}>{row.error}</span>
+                        </div>
+                      )}
+                      {row.state === "ok" && row.prospect && (
+                        <>
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{row.prospect.companyName ?? row.domain}</span>
+                                <span style={{ fontFamily: MONO, fontSize: 10, color: C.dim }}>{row.domain}</span>
+                              </div>
+                              {row.prospect.oneLiner && <p style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{row.prospect.oneLiner}</p>}
+                            </div>
+                            <div className="text-right shrink-0">
+                              <span style={{ fontFamily: MONO, fontSize: 20, fontWeight: 700, color: row.prospect.score >= 60 ? C.gold : row.prospect.score >= 30 ? C.sage : C.dim }}>
+                                {row.prospect.score}
+                              </span>
+                              <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim }}>/ 100</p>
+                            </div>
+                          </div>
+                          {row.prospect.scoreReasons.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {row.prospect.scoreReasons.map(r => (
+                                <span key={r} style={{ fontFamily: MONO, fontSize: 10, color: C.gold, background: "rgba(201,169,110,0.08)", border: "1px solid rgba(201,169,110,0.18)" }}
+                                  className="px-2 py-0.5 rounded-md">{r}</span>
+                              ))}
+                            </div>
+                          )}
+                          <div className="flex items-center gap-4 flex-wrap">
+                            {row.prospect.hiringVelocity !== "none" && (
+                              <span style={{ fontFamily: MONO, fontSize: 10, color: C.sage }}>↑ {row.prospect.hiringVelocity} hiring</span>
+                            )}
+                            {row.prospect.fundingStage && (
+                              <span style={{ fontFamily: MONO, fontSize: 10, color: C.indigo }}>{row.prospect.fundingStage}</span>
+                            )}
+                            {row.prospect.sourceRepo && (
+                              <span style={{ fontFamily: MONO, fontSize: 10, color: C.dim }}>via {row.prospect.sourceRepo}</span>
+                            )}
+                          </div>
+                          {row.prospect.techStack.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {row.prospect.techStack.slice(0, 6).map(t => (
+                                <span key={t} style={{ fontFamily: MONO, fontSize: 10, color: C.muted, background: C.surface, border: `1px solid ${C.border}` }}
+                                  className="px-2 py-0.5 rounded">{t}</span>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Enrich mode ── */}
+          {mode === "enrich" && <>
           {/* Pack picker */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {PACKS.map(p => {
@@ -418,6 +637,7 @@ export default function AppPage() {
               </div>
             </div>
           )}
+          </> /* end enrich mode */}
         </main>
       </div>
 

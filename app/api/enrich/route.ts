@@ -144,7 +144,7 @@ For external data fields (estimatedRevenue, fundingTotal, investors, glassdoorRa
     return { domain: clean, status: "ok", pack, profile, scrapedAt: new Date().toISOString() };
   } catch (err) {
     console.error("[enrich] enrichWithExtract failed:", err);
-    return { domain: clean, status: "error", pack, error: String(err).slice(0, 200) };
+    return { domain: clean, status: "error", pack, error: sanitizeError(String(err)) };
   }
 }
 

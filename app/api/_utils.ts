@@ -13,6 +13,8 @@ export function isValidDomain(s: string): boolean {
 
 /** Strips internal SDK/error details before returning to the client. */
 export function sanitizeError(raw: string): string {
+  if (/credit.?limit|purchase.?more.?credit|upgrade.?your.?plan/i.test(raw))
+    return "Credit limit reached — the demo's free Hyperbrowser credits are exhausted. Check back later or use your own API key.";
   if (/rate.?limit|concurrent|quota|429/i.test(raw))
     return "Rate limit — free tier allows one session at a time. Wait a moment and retry.";
   if (/api.?key|unauthorized|401|403/i.test(raw))

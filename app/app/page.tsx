@@ -1005,25 +1005,6 @@ function CompanyCard({ row, expanded, onToggle, index = 0, pack, visualIntel }: 
             </div>
           )}
 
-          {visualIntel && visualIntel.visualSignals.length > 0 && (
-            <div className="lg:col-span-3 rounded-xl px-4 py-3.5 relative overflow-hidden"
-              style={{ background: "rgba(139,144,200,0.06)", border: "1px solid rgba(139,144,200,0.20)" }}>
-              <div className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-xl" style={{ background: C.indigo }} />
-              <div className="flex items-center justify-between mb-3">
-                <span style={{ fontFamily: MONO, fontSize: 9, color: C.indigo, letterSpacing: "0.15em" }} className="uppercase">Visual Intel</span>
-                <span style={{ fontFamily: MONO, fontSize: 8, color: C.dim }}>screenshot analysis</span>
-              </div>
-              <ul className="space-y-1.5">
-                {visualIntel.visualSignals.map((s, i) => (
-                  <motion.li key={i} initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
-                    className="flex items-start gap-2">
-                    <span style={{ color: C.indigo, fontSize: 14, lineHeight: 1.2, flexShrink: 0 }}>›</span>
-                    <span style={{ fontSize: 11, color: C.muted, lineHeight: 1.55 }}>{s}</span>
-                  </motion.li>
-                ))}
-              </ul>
-            </div>
-          )}
 
           {profile.techStack.length > 0 && (
             <div>

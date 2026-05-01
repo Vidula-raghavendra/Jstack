@@ -129,14 +129,12 @@ function getConfigPath(editor: Editor, os: OS): string {
   return paths[editor][os];
 }
 
-function getConfig(editor: Editor, apiKey: string): string {
-  const key = apiKey || "YOUR_HYPERBROWSER_API_KEY";
+function getConfig(editor: Editor): string {
   if (editor === "continue") {
     return JSON.stringify({
       mcpServers: [{
         name: "seam",
         transport: { type: "http", url: MCP_URL },
-        env: { HYPERBROWSER_API_KEY: key },
       }],
     }, null, 2);
   }
@@ -145,7 +143,6 @@ function getConfig(editor: Editor, apiKey: string): string {
       seam: {
         command: "npx",
         args: ["-y", "mcp-remote", MCP_URL],
-        env: { HYPERBROWSER_API_KEY: key },
       },
     },
   }, null, 2);
@@ -190,12 +187,11 @@ function colorLine(line: string): string {
 export default function ConnectPage() {
   const [editor, setEditor] = useState<Editor>("claude");
   const [os, setOs]         = useState<OS>("mac");
-  const [apiKey, setApiKey] = useState("");
   const [copied, setCopied] = useState(false);
   const [testedOk, setTestedOk] = useState<boolean | null>(null);
   const [testing, setTesting]   = useState(false);
 
-  const config     = getConfig(editor, apiKey);
+  const config     = getConfig(editor);
   const configPath = getConfigPath(editor, os);
 
   function copy() {
@@ -281,38 +277,9 @@ export default function ConnectPage() {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 36 }}>
 
-          {/* Step 1 — API key */}
+          {/* Step 1 — Editor */}
           <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}>
-            <StepLabel n="01" text="Your Hyperbrowser API key" />
-            <input
-              type="password"
-              placeholder="hb_••••••••••••••••••••••••••••••"
-              value={apiKey}
-              onChange={e => setApiKey(e.target.value)}
-              style={{
-                fontFamily: MONO, background: C.card,
-                border: `1px solid ${C.border}`, borderRadius: 12,
-                color: C.text, fontSize: 13, width: "100%",
-                padding: "12px 16px", outline: "none", boxSizing: "border-box",
-                transition: "border-color 0.15s, box-shadow 0.15s",
-              }}
-              onFocus={e => { e.target.style.borderColor = C.gold; e.target.style.boxShadow = `0 0 0 3px ${C.goldLo}`; }}
-              onBlur={e => { e.target.style.borderColor = C.border; e.target.style.boxShadow = "none"; }}
-            />
-            <p style={{ fontFamily: MONO, fontSize: 11, color: C.dim, marginTop: 8 }}>
-              Get one at{" "}
-              <a href="https://hyperbrowser.ai" target="_blank" rel="noreferrer"
-                style={{ color: C.gold, textDecoration: "none" }}
-                onMouseEnter={e => (e.currentTarget.style.textDecoration = "underline")}
-                onMouseLeave={e => (e.currentTarget.style.textDecoration = "none")}
-              >hyperbrowser.ai</a>
-              {" "}→ Dashboard → API Keys. Never stored here.
-            </p>
-          </motion.section>
-
-          {/* Step 2 — Editor */}
-          <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.15 }}>
-            <StepLabel n="02" text="Your AI editor" />
+            <StepLabel n="01" text="Your AI editor" />
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
               {EDITORS.map((e, i) => (
                 <motion.button key={e.id}
@@ -335,9 +302,9 @@ export default function ConnectPage() {
             </div>
           </motion.section>
 
-          {/* Step 3 — OS */}
-          <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.2 }}>
-            <StepLabel n="03" text="Operating system" />
+          {/* Step 2 — OS */}
+          <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.15 }}>
+            <StepLabel n="02" text="Operating system" />
             <div style={{ display: "flex", gap: 8 }}>
               {OS_OPTIONS.map(o => (
                 <button key={o.id} onClick={() => setOs(o.id)}
@@ -358,9 +325,9 @@ export default function ConnectPage() {
             </div>
           </motion.section>
 
-          {/* Step 4 — Config */}
-          <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.25 }}>
-            <StepLabel n="04" text="Copy into your config file" />
+          {/* Step 3 — Config */}
+          <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.2 }}>
+            <StepLabel n="03" text="Copy into your config file" />
             <BeveledCard>
               {/* Path bar */}
               <div style={{
@@ -402,9 +369,9 @@ export default function ConnectPage() {
             </p>
           </motion.section>
 
-          {/* Step 5 — Test */}
-          <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.3 }}>
-            <StepLabel n="05" text="Test the connection" />
+          {/* Step 4 — Test */}
+          <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.25 }}>
+            <StepLabel n="04" text="Test the connection" />
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <motion.button
                 onClick={testConnection}
@@ -444,7 +411,7 @@ export default function ConnectPage() {
           </motion.section>
 
           {/* What you get */}
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.35 }}>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.3 }}>
             <BeveledCard style={{ padding: 0 }}>
               <div style={{ padding: "20px 24px 0" }}>
                 <p style={{ fontFamily: MONO, fontSize: 10, color: C.muted, letterSpacing: "0.15em", marginBottom: 16 }}>

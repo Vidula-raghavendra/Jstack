@@ -435,7 +435,7 @@ export default function Page() {
               style={{ background: C.sageDim, border: `1px solid ${C.sage}30`, borderRadius: 999, padding: "5px 12px 5px 10px" }}>
               <motion.div style={{ width: 6, height: 6, borderRadius: "50%", background: C.sage }}
                 animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 2, repeat: Infinity }} />
-              <span style={{ fontFamily: MONO, fontSize: 10, color: C.sage, letterSpacing: "0.18em" }}>STEALTH SESSION ONLINE</span>
+              <span style={{ fontFamily: MONO, fontSize: 10, color: C.sage, letterSpacing: "0.18em" }}>LIVE ENRICHMENT READY</span>
             </motion.div>
 
             <div className="grid grid-cols-12 gap-6 lg:gap-10 items-end">
@@ -638,8 +638,18 @@ export default function Page() {
                   <span style={{ color: C.dim }}>{"}"}</span>
                 </pre>
                 <div className="px-5 py-4" style={{ borderTop: `1px solid ${C.border}` }}>
-                  <div style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.16em", marginBottom: 6 }}>THEN ASK CLAUDE</div>
-                  <div style={{ fontFamily: MONO, fontSize: 13, color: C.sage }}>&gt; extract stripe.com and linear.app with the SDR pack</div>
+                  <div style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.16em", marginBottom: 8 }}>THEN ASK CLAUDE</div>
+                  <div style={{ fontFamily: MONO, fontSize: 13, color: C.sage, marginBottom: 14 }}>&gt; extract stripe.com and linear.app with the SDR pack</div>
+                  <div style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.16em", marginBottom: 8 }}>RESULT</div>
+                  <div style={{ fontFamily: MONO, fontSize: 11, lineHeight: 1.75, color: C.muted }}>
+                    <span style={{ color: C.dim }}>{"{"}</span><br />
+                    {"  "}<span style={{ color: C.indigo }}>&quot;domain&quot;</span><span style={{ color: C.dim }}>:</span> <span style={{ color: C.sage }}>&quot;stripe.com&quot;</span><span style={{ color: C.dim }}>,</span><br />
+                    {"  "}<span style={{ color: C.indigo }}>&quot;pricingModel&quot;</span><span style={{ color: C.dim }}>:</span> <span style={{ color: C.sage }}>&quot;sales-led&quot;</span><span style={{ color: C.dim }}>,</span><br />
+                    {"  "}<span style={{ color: C.indigo }}>&quot;buyingSignals&quot;</span><span style={{ color: C.dim }}>: [</span><span style={{ color: C.gold }}>&quot;Talk to sales CTA on enterprise tier&quot;</span><span style={{ color: C.dim }}>, ...</span><span style={{ color: C.dim }}>],</span><br />
+                    {"  "}<span style={{ color: C.indigo }}>&quot;people&quot;</span><span style={{ color: C.dim }}>: [</span><span style={{ color: C.text }}>&quot;Patrick Collison&quot;</span><span style={{ color: C.dim }}>, ...</span><span style={{ color: C.dim }}>],</span><br />
+                    {"  "}<span style={{ color: C.indigo }}>&quot;scrapedIn&quot;</span><span style={{ color: C.dim }}>:</span> <span style={{ color: C.sage }}>&quot;58s&quot;</span><br />
+                    <span style={{ color: C.dim }}>{"}"}</span>
+                  </div>
                 </div>
               </BeveledCard>
             </motion.div>
@@ -671,7 +681,7 @@ export default function Page() {
               <motion.h2 initial={{ y: "100%" }} whileInView={{ y: "0%" }} viewport={{ once: true }}
                 transition={{ duration: 0.95, ease: E }}
                 style={{ fontFamily: SF, fontWeight: 700, fontSize: "clamp(56px,9vw,140px)", letterSpacing: "-0.045em", lineHeight: 0.92, color: C.textHi }}>
-                Ready to scrape?
+                Find your seam.
               </motion.h2>
             </div>
             <motion.p initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.3 }}
@@ -686,21 +696,34 @@ export default function Page() {
         </section>
 
         {/* ── FOOTER ── */}
-        <footer className="py-10" style={{ borderTop: `1px solid ${C.border}`, background: C.bgHi }}>
-          <div className="max-w-[1320px] mx-auto px-6 lg:px-10 grid grid-cols-12 gap-6 items-baseline">
-            <div className="col-span-6 lg:col-span-3">
-              <a href="/" className="flex items-baseline gap-1" style={{ textDecoration: "none" }}>
-                <span style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 22, color: C.text, letterSpacing: "-0.01em" }}>Seam</span>
-                <span style={{ color: C.sage, fontSize: 11 }}>·</span>
-              </a>
+        <footer className="py-12" style={{ borderTop: `1px solid ${C.border}`, background: C.bgHi }}>
+          <div className="max-w-[1320px] mx-auto px-6 lg:px-10">
+            <div className="grid grid-cols-12 gap-6 items-start mb-10">
+              <div className="col-span-12 lg:col-span-4">
+                <a href="/" className="flex items-baseline gap-1 mb-3" style={{ textDecoration: "none", display: "inline-flex" }}>
+                  <span style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 22, color: C.text, letterSpacing: "-0.01em" }}>Seam</span>
+                  <span style={{ color: C.sage, fontSize: 11 }}>·</span>
+                </a>
+                <p style={{ fontFamily: SF, fontSize: 13, color: C.muted, fontStyle: "italic", lineHeight: 1.6 }}>Intelligence runs deep.</p>
+              </div>
+              <div className="col-span-6 lg:col-span-2 lg:col-start-6">
+                <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.16em", marginBottom: 12 }} className="uppercase">Product</p>
+                {[["Open app", "/app"], ["Packs", "#packs"], ["Process", "#process"], ["MCP", "#mcp"]].map(([label, href]) => (
+                  <a key={label} href={href} style={{ fontFamily: SF, fontSize: 13, color: C.muted, display: "block", marginBottom: 8, textDecoration: "none", transition: "color 0.15s" }}
+                    onMouseEnter={e => (e.currentTarget.style.color = C.text)} onMouseLeave={e => (e.currentTarget.style.color = C.muted)}>{label}</a>
+                ))}
+              </div>
+              <div className="col-span-6 lg:col-span-2">
+                <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.16em", marginBottom: 12 }} className="uppercase">Connect</p>
+                {[["MCP Config", "/connect"], ["GitHub", "https://github.com"], ["Hyperbrowser", "https://hyperbrowser.ai"]].map(([label, href]) => (
+                  <a key={label} href={href} target={href.startsWith("http") ? "_blank" : undefined} rel={href.startsWith("http") ? "noopener" : undefined}
+                    style={{ fontFamily: SF, fontSize: 13, color: C.muted, display: "block", marginBottom: 8, textDecoration: "none", transition: "color 0.15s" }}
+                    onMouseEnter={e => (e.currentTarget.style.color = C.text)} onMouseLeave={e => (e.currentTarget.style.color = C.muted)}>{label}</a>
+                ))}
+              </div>
             </div>
-            <div className="col-span-6 lg:col-span-3 text-right lg:text-left">
+            <div className="flex items-center justify-between pt-8" style={{ borderTop: `1px solid ${C.border}` }}>
               <span style={{ fontFamily: MONO, fontSize: 10, color: C.dim, letterSpacing: "0.16em" }}>STEALTH-POWERED BY HYPERBROWSER</span>
-            </div>
-            <div className="col-span-6 lg:col-span-3 hidden lg:block">
-              <span style={{ fontFamily: SF, fontSize: 12, color: C.muted, fontStyle: "italic" }}>Intelligence runs deep.</span>
-            </div>
-            <div className="col-span-6 lg:col-span-3 text-right">
               <span style={{ fontFamily: MONO, fontSize: 10, color: C.dim, letterSpacing: "0.14em" }}>© 2026 SEAM</span>
             </div>
           </div>

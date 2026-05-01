@@ -28,7 +28,14 @@
       "Bash(curl -s -o /tmp/app.html -w \"HTTP %{http_code}\\\\n\" http://localhost:3000/app)",
       "Bash(curl -s -o /tmp/app2.html -w \"HTTP %{http_code}\\\\n\" http://localhost:3000/app)",
       "Bash(curl -s -o /dev/null -w \"landing: HTTP %{http_code}\\\\n\" http://localhost:3000/)",
-      "Bash(curl -s -o /dev/null -w \"app:     HTTP %{http_code}\\\\n\" http://localhost:3000/app)"
+      "Bash(curl -s -o /dev/null -w \"app:     HTTP %{http_code}\\\\n\" http://localhost:3000/app)",
+      "Bash(python3 -c ' *)",
+      "Bash(netstat -ano)",
+      "Bash(findstr \":3000 \")",
+      "Bash(findstr LISTENING)",
+      "Bash(node -e ' *)",
+      "Skill(office-hours)",
+      "Skill(office-hours:*)"
     ]
   }
 }

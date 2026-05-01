@@ -28,14 +28,15 @@ export function proxy(req: NextRequest) {
     "Strict-Transport-Security",
     "max-age=63072000; includeSubDomains; preload"
   );
+  const isDev = process.env.NODE_ENV !== "production";
   res.headers.set(
     "Content-Security-Policy",
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline'",
+      isDev ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'" : "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: https://www.google.com",
+      "img-src 'self' data: https://www.google.com https://*.gstatic.com",
       "connect-src 'self'",
       // Allow Hyperbrowser live session iframes
       "frame-src https://*.hyperbrowser.ai https://hyperbrowser.ai",

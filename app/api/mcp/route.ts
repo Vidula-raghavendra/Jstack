@@ -25,9 +25,9 @@ const TOOLS = [
         },
         pack: {
           type: "string",
-          enum: ["sdr", "recruiter", "vc"],
+          enum: ["sdr", "recruiter", "vc", "upgrade"],
           description:
-            "Which intelligence lens to use. sdr = buying signals + decision-makers. recruiter = hiring trajectory + tech stack. vc = funding + traction + team caliber.",
+            "Which intelligence lens to use. sdr = buying signals + decision-makers. recruiter = hiring trajectory + tech stack. vc = funding + traction + team caliber. upgrade = free→paid conversion signals for Hyperbrowser users.",
           default: "sdr",
         },
       },
@@ -45,6 +45,7 @@ const PACKS_DOC = [
   { id: "sdr", title: "SDR Pack", optimisedFor: "Outbound sales — decision-makers + buying signals", returns: "people (founders/VPs), pricing model, named customers, recent launches, integrations" },
   { id: "recruiter", title: "Recruiter Pack", optimisedFor: "Talent intel — who they hire + what stack", returns: "all open roles, tech stack from job posts, hiring velocity, engineering leaders" },
   { id: "vc", title: "VC Pack", optimisedFor: "Investment screening — traction + team + market", returns: "funding stage, named investors, customer logos, founder backgrounds, expansion signals" },
+  { id: "upgrade", title: "Upgrade Pack", optimisedFor: "Free → paid conversion for Hyperbrowser users", returns: "scale signals, upgrade urgency score, bottleneck reasons, personalized upgrade message" },
 ];
 
 type JsonRpcRequest = { jsonrpc: "2.0"; id?: number | string | null; method: string; params?: unknown };
@@ -98,7 +99,8 @@ async function handleRpc(req: JsonRpcRequest) {
           .filter(isValidDomain)
           .slice(0, 10);
 
-        const pack: Pack = args.pack === "recruiter" || args.pack === "vc" ? args.pack : "sdr";
+        const VALID_PACKS = new Set<Pack>(["sdr", "recruiter", "vc", "upgrade"]);
+        const pack: Pack = typeof args.pack === "string" && VALID_PACKS.has(args.pack as Pack) ? (args.pack as Pack) : "sdr";
         if (!domains.length) return err(req.id, -32602, "domains array required (valid hostnames only)");
 
         const results = [];

@@ -1,5 +1,4 @@
 import { Hyperbrowser } from "@hyperbrowser/sdk";
-import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { isValidDomain, sanitizeError, normalizeDomain } from "../_utils";
 
@@ -9,10 +8,7 @@ const hbKey = process.env.HYPERBROWSER_API_KEY;
 if (!hbKey) throw new Error("HYPERBROWSER_API_KEY is not set");
 const hb = new Hyperbrowser({ apiKey: hbKey });
 
-const anthropicKey = process.env.ANTHROPIC_API_KEY;
-const claude = anthropicKey ? new Anthropic({ apiKey: anthropicKey }) : null;
-
-export type Pack = "sdr" | "recruiter" | "vc";
+export type Pack = "sdr" | "recruiter" | "vc" | "upgrade";
 
 const PACK_CONFIG: Record<Pack, { extraUrls: (c: string) => string[]; focus: string; signalKey: "buying" | "hiring" | "investment"; screenshotUrl: (c: string) => string }> = {
   sdr: {
@@ -33,9 +29,17 @@ const PACK_CONFIG: Record<Pack, { extraUrls: (c: string) => string[]; focus: str
     signalKey: "investment",
     screenshotUrl: (c) => `https://${c}`,
   },
+  upgrade: {
+    extraUrls: (c) => [`https://${c}/about`, `https://${c}/pricing`],
+    focus: `UPGRADE FOCUS: This company uses the Hyperbrowser SDK. Qualify them for a paid plan upgrade.
+Extract: exactly what they build with browser automation, whether it runs in production serving real customers, team size and hiring pace, funding or revenue signals, and any evidence they are hitting scale limits (parallel scraping jobs, real-time monitoring, commercial SLA requirements).
+Surface in buying signals: concrete reasons their free tier (1 concurrent session, 5k credits) is a bottleneck for what they are building.`,
+    signalKey: "buying",
+    screenshotUrl: (c) => `https://${c}`,
+  },
 };
 
-/* ── Pack-specific vision prompts ─────────────────────────────────────── */
+/* ── Pack-specific vision prompts — kept for future use ───────────────── */
 const VISION_PROMPTS: Record<Pack, string> = {
   sdr: `You are analyzing a company's pricing page screenshot for B2B sales intelligence.
 Extract the following and return ONLY valid JSON matching this exact shape:
@@ -70,6 +74,16 @@ Extract the following and return ONLY valid JSON matching this exact shape:
   "visualSignals": ["2-4 specific investment signals only visible in the screenshot, e.g. 'hero shows enterprise dashboard UI suggesting B2B focus', 'G2 badge visible showing 4.8/5 rating'"]
 }
 If the page is a 404 or error page, return customerLogoCount as 0 and all arrays empty.`,
+
+  upgrade: `You are analyzing a company's homepage screenshot to assess their Hyperbrowser upgrade readiness.
+Extract the following and return ONLY valid JSON matching this exact shape:
+{
+  "productDescription": "one sentence on what this product does",
+  "hasPaidCustomers": true or false based on visible customer logos, pricing, or testimonials,
+  "isBrowserAutomationCore": true or false — is browser automation central to their product?,
+  "visualSignals": ["2-4 specific observations about scale/production readiness visible in the screenshot, e.g. 'enterprise pricing page with Talk to Sales CTA', 'dashboard UI shows real-time data pipeline'"]
+}
+If the page is a 404 or error page, return booleans false and arrays empty.`,
 };
 
 const VisualIntelSchema = z.object({
@@ -90,6 +104,10 @@ const VisualIntelSchema = z.object({
   customerLogosVisible: z.array(z.string()).default([]),
   metricsBanners: z.array(z.string()).default([]),
   pressLogos: z.array(z.string()).default([]),
+  // Upgrade fields
+  productDescription: z.string().optional(),
+  hasPaidCustomers: z.boolean().default(false),
+  isBrowserAutomationCore: z.boolean().default(false),
   // Common
   visualSignals: z.array(z.string()).default([]),
 });
@@ -104,32 +122,47 @@ const PersonSchema = z.object({
   twitter: z.string().optional(),
 });
 
+const SignalItemSchema = z.object({
+  title: z.string().describe("Short headline, max 8 words — the actionable takeaway"),
+  detail: z.string().describe("One sentence of supporting evidence from what you found"),
+  tag: z.string().optional().describe("Category tag, e.g. 'PLG', 'Expansion', 'Intent', 'Competitor', 'Funding', 'Scale'"),
+});
+
 const SignalsSchema = z.object({
-  buying: z.array(z.string()).default([]).describe("Buying signals: pricing model hints, recent launches, integrations, customer wins, expansion moves"),
-  hiring: z.array(z.string()).default([]).describe("Hiring signals: roles being filled, tech migrations from job posts, team growth pace, location strategy"),
-  investment: z.array(z.string()).default([]).describe("Investment signals: funding events, traction proof, team caliber, market position, partnerships"),
+  buying: z.array(SignalItemSchema).default([]).describe("Buying signals: each with short title + one-sentence evidence"),
+  hiring: z.array(SignalItemSchema).default([]).describe("Hiring signals: each with short title + one-sentence evidence"),
+  investment: z.array(SignalItemSchema).default([]).describe("Investment signals: each with short title + one-sentence evidence"),
 }).default({ buying: [], hiring: [], investment: [] });
 
 const CompanyProfileSchema = z.object({
-  name: z.string().describe("Company legal or brand name"),
-  oneLiner: z.string().describe("One sentence: what the company does and for whom"),
-  productCategory: z.string().describe("e.g. DevTools, Fintech, AI Infrastructure, SaaS CRM, E-commerce"),
-  customers: z.string().describe("Who they sell to: enterprises, developers, SMBs, consumers, etc."),
-  namedCustomers: z.array(z.string()).default([]).describe("Specific customer logos or company names mentioned on the site"),
-  techStack: z.array(z.string()).describe("Technologies explicitly mentioned on the site or in job postings"),
+  name: z.string().default("Unknown"),
+  oneLiner: z.string().default(""),
+  productCategory: z.string().default(""),
+  customers: z.string().default(""),
+  namedCustomers: z.array(z.string()).default([]),
+  techStack: z.array(z.string()).default([]),
   openRoles: z.array(z.object({
     title: z.string(),
     team: z.string().optional(),
     location: z.string().optional(),
-  })).describe("All open job listings"),
-  hiringVelocity: z.enum(["none", "slow", "steady", "aggressive"]).describe("none=0 roles, slow=1-3, steady=4-10, aggressive=10+"),
+  })).default([]),
+  hiringVelocity: z.enum(["none", "slow", "steady", "aggressive"]).default("none"),
   pricingModel: z.enum(["self-serve", "sales-led", "freemium", "enterprise", "unknown"]).default("unknown"),
+  revenueModel: z.string().optional(),
+  estimatedRevenue: z.string().optional(),
   fundingStage: z.string().optional(),
+  fundingTotal: z.string().optional(),
   investors: z.array(z.string()).default([]),
   teamSizeEstimate: z.string().optional(),
+  linkedinEmployeeCount: z.string().optional(),
+  glassdoorRating: z.string().optional(),
+  g2Rating: z.string().optional(),
+  trustpilotRating: z.string().optional(),
+  monthlyVisitors: z.string().optional(),
   foundedYear: z.string().optional(),
   recentLaunches: z.array(z.string()).default([]),
-  keySignals: z.array(z.string()).describe("3-5 cross-cutting strategic signals"),
+  competitorMentions: z.array(z.string()).default([]),
+  keySignals: z.array(z.string()).default([]),
   signals: SignalsSchema,
   people: z.array(PersonSchema).default([]),
   socialLinks: z.object({
@@ -161,14 +194,17 @@ async function enrichWithExtract(domain: string, pack: Pack): Promise<EnrichResu
   const baseUrls = [
     `https://${clean}`, `https://${clean}/about`, `https://${clean}/team`,
     `https://${clean}/careers`, `https://${clean}/jobs`, `https://${clean}/leadership`,
+    `https://www.crunchbase.com/organization/${clean.split(".")[0]}`,
+    `https://www.linkedin.com/company/${clean.split(".")[0]}`,
   ];
 
   try {
     const result = await hb.extract.startAndWait({
-      urls: [...baseUrls, ...cfg.extraUrls(clean)],
-      prompt: `Extract a comprehensive company intelligence profile. ${cfg.focus}
+      urls: [...baseUrls, ...cfg.extraUrls(clean)].slice(0, 10),
+      prompt: `Extract a comprehensive company intelligence profile from all the pages provided. ${cfg.focus}
 For "people": collect every person on team/about/leadership pages. Include name (required), role, full LinkedIn URL if publicly linked, public email/Twitter if shown. Never invent URLs.
-For "signals": populate ALL three arrays with 3-6 concrete, actionable items each.`,
+For "signals": each item MUST have a "title" (max 8 words, action-oriented takeaway) and "detail" (one sentence of evidence). Populate buying, hiring, and investment arrays with 4-6 items each.
+For external data fields (estimatedRevenue, fundingTotal, investors, glassdoorRating, g2Rating, linkedinEmployeeCount, monthlyVisitors): extract from Crunchbase, LinkedIn, and any press pages found. Leave null if not found — never guess.`,
       schema: CompanyProfileSchema,
       sessionOptions: { useStealth: true },
     });
@@ -179,156 +215,15 @@ For "signals": populate ALL three arrays with 3-6 concrete, actionable items eac
 
     const profile = CompanyProfileSchema.parse(result.data);
     return { domain: clean, status: "ok", pack, profile, scrapedAt: new Date().toISOString() };
-  } catch {
-    return { domain: clean, status: "error", pack, error: "Schema validation failed" };
+  } catch (err) {
+    console.error("[enrich] enrichWithExtract failed:", err);
+    return { domain: clean, status: "error", pack, error: String(err).slice(0, 200) };
   }
 }
 
-/* ── Visual intelligence capture ─────────────────────────────────────── */
-async function captureVisualIntel(domain: string, pack: Pack): Promise<VisualIntel | null> {
-  if (!claude) return null;
-
-  const targetUrl = PACK_CONFIG[pack].screenshotUrl(domain);
-
-  try {
-    const scraped = await hb.scrape.startAndWait({
-      url: targetUrl,
-      scrapeOptions: { formats: ["screenshot"] },
-      sessionOptions: { useStealth: true },
-    });
-
-    const screenshot = (scraped.data as { screenshot?: string } | null)?.screenshot;
-    if (!screenshot) return null;
-
-    const response = await claude.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 1024,
-      messages: [{
-        role: "user",
-        content: [
-          {
-            type: "image",
-            source: { type: "base64", media_type: "image/png", data: screenshot },
-          },
-          { type: "text", text: VISION_PROMPTS[pack] },
-        ],
-      }],
-    });
-
-    const text = response.content[0].type === "text" ? response.content[0].text : "";
-    // Strip markdown code fences if Claude wraps the JSON
-    const clean = text.replace(/^```(?:json)?\n?/m, "").replace(/\n?```$/m, "").trim();
-    const parsed = JSON.parse(clean);
-    return VisualIntelSchema.parse({ screenshotUrl: targetUrl, ...parsed });
-  } catch {
-    return null; // visual intel is best-effort — never fail the whole enrichment
-  }
-}
-
-const AGENT_TASKS: Record<Pack, (domain: string) => string> = {
-  sdr: (d) => `You are a B2B sales analyst researching ${d} for outbound sales intelligence.
-Navigate their website autonomously. Your goal:
-1. Go to the homepage — note the hero message, value proposition, and any customer logos
-2. Navigate to /pricing or find the pricing link — record every tier name, price point, and "Talk to Sales" CTAs
-3. Find the customers or case studies page — collect every named customer logo or company mention
-4. Check the blog for the 3 most recent posts — extract titles and dates as evidence of recent activity
-5. Find /about or /team — collect every founder, VP, Director, or Head-level person with their full title
-Return a detailed research report with all findings.`,
-
-  recruiter: (d) => `You are a technical recruiter researching ${d} for hiring intelligence.
-Navigate their website autonomously. Your goal:
-1. Find the careers or jobs page — list every open role with title, team, and location
-2. Click into 3-5 job postings — extract every technology, language, framework, and cloud mentioned
-3. Find the engineering blog if one exists — what topics do they write about?
-4. Find the /about or /team page — identify engineering leaders and hiring managers
-5. Note any public headcount signals (team size, "we are X people", LinkedIn employee count if shown)
-Return a detailed research report with all findings.`,
-
-  vc: (d) => `You are a VC analyst doing investment due diligence on ${d}.
-Navigate their website autonomously. Your goal:
-1. Homepage — capture the value prop, any metrics banners (users, revenue, growth stats), and press logos
-2. Find /press, /news, or /investors — look for funding announcements with investor names and round sizes
-3. Find /about or /team — identify founders and where they previously worked (company pedigree)
-4. Find /customers or /case-studies — collect customer logos and any ARR/usage statistics mentioned
-5. Note any partnership announcements, enterprise customers, or geographic expansion signals
-Return a detailed research report with all findings.`,
-};
-
-/* ── Main enrichment ─────────────────────────────────────────────────── */
-async function enrichDomain(domain: string, pack: Pack, onLiveUrl?: (url: string) => void): Promise<EnrichResult> {
-  // Without Claude, fall back to Hyperbrowser's native extract (no LLM required)
-  if (!claude) return enrichWithExtract(domain, pack);
-
-  const clean = domain.replace(/^https?:\/\//, "").replace(/\/$/, "");
-  const cfg = PACK_CONFIG[pack];
-
-  // Start the autonomous browser agent
-  const agentJob = await hb.agents.browserUse.start({
-    task: AGENT_TASKS[pack](clean),
-    sessionOptions: { useStealth: true },
-    useVision: true,
-    maxSteps: 20,
-  });
-
-  // Stream the live URL back immediately so UI can show live browser feed
-  if (agentJob.liveUrl && onLiveUrl) onLiveUrl(agentJob.liveUrl);
-
-  // Poll agent to completion while visual screenshot runs in parallel
-  async function pollAgent() {
-    let result = await hb.agents.browserUse.get(agentJob.jobId);
-    while (result.status === "running" || result.status === "pending") {
-      await new Promise(r => setTimeout(r, 3000));
-      result = await hb.agents.browserUse.get(agentJob.jobId);
-    }
-    return result;
-  }
-
-  const [agentResult, visualIntel] = await Promise.all([
-    pollAgent(),
-    captureVisualIntel(clean, pack),
-  ]);
-
-  if (agentResult.status !== "completed" || !agentResult.data?.finalResult) {
-    return { domain: clean, status: "error", pack, error: agentResult.error ?? "Agent task failed" };
-  }
-
-  // Parse the agent's free-text research report into structured profile via Claude
-  const structureResponse = await claude.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 4096,
-    messages: [{
-      role: "user",
-      content: `You are given a raw research report from an autonomous web agent that browsed ${clean}.
-Extract it into the exact JSON schema below. Be specific and literal — only include facts from the report, never hallucinate.
-
-${cfg.focus}
-
-Research report:
-${agentResult.data.finalResult}
-
-Return ONLY valid JSON matching this TypeScript schema:
-${JSON.stringify(CompanyProfileSchema.shape, null, 2)}`,
-    }],
-  });
-
-  const text = structureResponse.content[0].type === "text" ? structureResponse.content[0].text : "";
-  const clean2 = text.replace(/^```(?:json)?\n?/m, "").replace(/\n?```$/m, "").trim();
-
-  try {
-    const parsed = JSON.parse(clean2);
-    const profile = CompanyProfileSchema.parse(parsed);
-    return {
-      domain: clean,
-      status: "ok",
-      pack,
-      profile,
-      visualIntel: visualIntel ?? undefined,
-      agentLiveUrl: agentJob.liveUrl ?? undefined,
-      scrapedAt: new Date().toISOString(),
-    };
-  } catch {
-    return { domain: clean, status: "error", pack, error: "Schema validation failed" };
-  }
+/* ── Main enrichment — Hyperbrowser native extract only ─────────────── */
+async function enrichDomain(domain: string, pack: Pack, _onLiveUrl?: (url: string) => void): Promise<EnrichResult> {
+  return enrichWithExtract(domain, pack);
 }
 
 /* ── Streaming POST ──────────────────────────────────────────────────── */
@@ -341,7 +236,8 @@ export async function POST(request: Request) {
   }
 
   const { domains, pack } = body;
-  const selectedPack: Pack = pack === "recruiter" || pack === "vc" ? pack : "sdr";
+  const VALID_PACKS = new Set<Pack>(["sdr", "recruiter", "vc", "upgrade"]);
+  const selectedPack: Pack = typeof pack === "string" && VALID_PACKS.has(pack as Pack) ? (pack as Pack) : "sdr";
 
   if (!Array.isArray(domains) || domains.length === 0) {
     return Response.json({ error: "domains array required" }, { status: 400 });

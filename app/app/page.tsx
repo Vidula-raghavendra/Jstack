@@ -906,24 +906,62 @@ function CompanyCard({ row, expanded, onToggle, index = 0, pack, visualIntel }: 
           {profile?.oneLiner && <p style={{ fontSize: 12, color: C.muted }} className="mt-0.5 truncate">{profile.oneLiner}</p>}
         </div>
 
-        <div className="hidden md:flex gap-1 shrink-0">
-          {profile?.techStack?.slice(0, 3).map(t => (
-            <span key={t} style={{ fontFamily: MONO, fontSize: 9, color: C.muted, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: "2px 7px" }}>{t}</span>
-          ))}
-          {(profile?.techStack?.length ?? 0) > 3 && <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim }}>+{profile!.techStack.length - 3}</span>}
+        {/* Pack-specific header summary pills */}
+        <div className="hidden md:flex gap-1.5 shrink-0 items-center">
+          {state === "ok" && profile && pack === "sdr" && <>
+            {profile.pricingModel && profile.pricingModel !== "unknown" && (
+              <span style={{ fontFamily: MONO, fontSize: 9, color: C.gold, background: C.goldLo, border: `1px solid ${C.goldBorder}`, borderRadius: 4, padding: "2px 8px" }}>{profile.pricingModel}</span>
+            )}
+            {profile.namedCustomers?.length > 0 && (
+              <span style={{ fontFamily: MONO, fontSize: 9, color: C.muted, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: "2px 8px" }}>{profile.namedCustomers.length} logos</span>
+            )}
+          </>}
+          {state === "ok" && profile && pack === "recruiter" && <>
+            {profile.techStack?.slice(0, 3).map(t => (
+              <span key={t} style={{ fontFamily: MONO, fontSize: 9, color: C.muted, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: "2px 7px" }}>{t}</span>
+            ))}
+            {(profile.techStack?.length ?? 0) > 3 && <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim }}>+{profile.techStack.length - 3}</span>}
+          </>}
+          {state === "ok" && profile && pack === "vc" && <>
+            {profile.fundingStage && (
+              <span style={{ fontFamily: MONO, fontSize: 9, color: C.sage, background: C.sageLo, border: `1px solid ${C.sage}30`, borderRadius: 4, padding: "2px 8px" }}>{profile.fundingStage}</span>
+            )}
+            {profile.foundedYear && (
+              <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim }}>est. {profile.foundedYear}</span>
+            )}
+          </>}
+          {state === "ok" && profile && pack === "upgrade" && <>
+            {profile.fundingStage && (
+              <span style={{ fontFamily: MONO, fontSize: 9, color: C.muted, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: "2px 8px" }}>{profile.fundingStage}</span>
+            )}
+            {profile.linkedinEmployeeCount && (
+              <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim }}>{profile.linkedinEmployeeCount} employees</span>
+            )}
+          </>}
         </div>
-
-        {profile && <span style={{ fontFamily: MONO, fontSize: 10, color: C.muted }} className="shrink-0 hidden sm:block">{profile.openRoles.length} role{profile.openRoles.length !== 1 ? "s" : ""}</span>}
 
         <div className={`flex justify-end ${state === "loading" ? "flex-1 min-w-0 ml-2" : "shrink-0 w-36"}`}>
           {state === "loading" && <LiveProgress row={row} />}
           {state === "pending" && <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.1em" }} className="uppercase">Queued</span>}
           {state === "error"   && <span style={{ fontFamily: MONO, fontSize: 9, color: C.rose, letterSpacing: "0.1em" }} className="uppercase">Failed</span>}
-          {state === "ok" && vel && (
+          {state === "ok" && pack === "recruiter" && vel && (
             <span className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full border font-medium"
               style={{ color: velColor, background: `${velColor}14`, borderColor: `${velColor}30` }}>
               <SignalBars velocity={profile!.hiringVelocity} />
               {vel.label}
+            </span>
+          )}
+          {state === "ok" && pack === "sdr" && profile && (
+            <span style={{ fontFamily: MONO, fontSize: 9, color: C.muted }}>{profile.people?.length ?? 0} contacts</span>
+          )}
+          {state === "ok" && pack === "vc" && profile && (
+            <span style={{ fontFamily: MONO, fontSize: 9, color: C.muted }}>{profile.investors?.length ?? 0} investors</span>
+          )}
+          {state === "ok" && pack === "upgrade" && profile && (
+            <span className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full border font-medium"
+              style={{ color: velColor, background: `${velColor}14`, borderColor: `${velColor}30` }}>
+              <SignalBars velocity={profile!.hiringVelocity} />
+              {vel?.label}
             </span>
           )}
         </div>
@@ -946,14 +984,15 @@ function CompanyCard({ row, expanded, onToggle, index = 0, pack, visualIntel }: 
       )}
 
       {expanded && state === "ok" && profile && (
-        <div className="border-t px-5 py-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 text-[12px]" style={{ borderColor: C.border }}>
+        <div className="border-t px-5 py-5 space-y-6 text-[12px]" style={{ borderColor: C.border }}>
+
+          {/* ── Signals — same for all packs ── */}
           {packSignals.length > 0 && (
-            <div className="lg:col-span-3">
+            <div>
               <div className="flex items-center justify-between mb-3">
                 <span style={{ fontFamily: MONO, fontSize: 9, color: packCfg.accent, letterSpacing: "0.15em" }} className="uppercase">
-                  {packCfg.label} · {signalKey} signals ({packSignals.length})
+                  {packCfg.label} signals ({packSignals.length})
                 </span>
-                <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim }}>tap each to expand</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {packSignals.map((s, i) => (
@@ -965,126 +1004,277 @@ function CompanyCard({ row, expanded, onToggle, index = 0, pack, visualIntel }: 
             </div>
           )}
 
-          {profile && <ExternalMetrics profile={profile} />}
-
-          <div className="lg:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4">
-            {pack === "sdr" && <>
+          {/* ══ SDR PACK ══ */}
+          {pack === "sdr" && <>
+            {/* Stats row */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {profile.pricingModel && profile.pricingModel !== "unknown" && <DetailCell label="Pricing model" value={profile.pricingModel} />}
               {profile.revenueModel && <DetailCell label="Revenue model" value={profile.revenueModel} />}
-              {profile.namedCustomers?.length > 0 && <DetailCell label="Named customers" value={profile.namedCustomers.slice(0, 4).join(", ") + (profile.namedCustomers.length > 4 ? ` +${profile.namedCustomers.length - 4}` : "")} />}
+              {profile.estimatedRevenue && <DetailCell label="Est. revenue" value={profile.estimatedRevenue} />}
               {profile.teamSizeEstimate && <DetailCell label="Team size" value={profile.teamSizeEstimate} />}
-            </>}
-            {pack === "recruiter" && <>
+              {profile.monthlyVisitors && <DetailCell label="Monthly visitors" value={profile.monthlyVisitors} />}
+              {profile.fundingStage && <DetailCell label="Funding stage" value={profile.fundingStage} />}
+            </div>
+
+            {/* Named customers — the namedrop arsenal */}
+            {profile.namedCustomers?.length > 0 && (
+              <div>
+                <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.1em" }} className="uppercase mb-2">
+                  Customer logos ({profile.namedCustomers.length}) — use in cold outreach
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {profile.namedCustomers.map((c, i) => (
+                    <span key={i} style={{ fontSize: 11, color: C.text, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: "4px 10px" }}>{c}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Trigger events */}
+            {profile.recentLaunches?.length > 0 && (
+              <div>
+                <p style={{ fontFamily: MONO, fontSize: 9, color: C.gold, letterSpacing: "0.1em" }} className="uppercase mb-2">
+                  Trigger events — reference in your opener
+                </p>
+                <div className="space-y-1">
+                  {profile.recentLaunches.map((l, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <span style={{ color: C.gold, fontSize: 10, lineHeight: 1.8, flexShrink: 0 }}>↗</span>
+                      <span style={{ fontSize: 12, color: C.muted, lineHeight: 1.6 }}>{l}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Competitor mentions */}
+            {profile.competitorMentions?.length > 0 && (
+              <div>
+                <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.1em" }} className="uppercase mb-2">Competitor mentions</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {profile.competitorMentions.map((c, i) => (
+                    <span key={i} style={{ fontFamily: MONO, fontSize: 10, color: C.dim, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: "2px 8px" }}>{c}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Decision makers — cold outreach targets */}
+            {profile.people?.length > 0 && (
+              <div>
+                <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.1em" }} className="uppercase mb-3">
+                  Decision makers · public sources only
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {profile.people.map((p, i) => (
+                    <PersonCard key={`${p.name}-${i}`} person={p} index={i} accentColor={C.gold} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <SocialFooter profile={profile} />
+          </>}
+
+          {/* ══ RECRUITER PACK ══ */}
+          {pack === "recruiter" && <>
+            {/* Stats row */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <DetailCell label="Open roles" value={String(profile.openRoles?.length ?? 0)} />
               <DetailCell label="Hiring pace" value={VELOCITY_CONFIG[profile.hiringVelocity]?.label ?? profile.hiringVelocity} />
               {profile.linkedinEmployeeCount && <DetailCell label="LinkedIn employees" value={profile.linkedinEmployeeCount} />}
-              {profile.glassdoorRating && <DetailCell label="Glassdoor" value={profile.glassdoorRating} />}
-            </>}
-            {pack === "vc" && <>
+              {profile.glassdoorRating && <DetailCell label="Glassdoor" value={`${profile.glassdoorRating} ★`} />}
+              {profile.teamSizeEstimate && <DetailCell label="Team size est." value={profile.teamSizeEstimate} />}
+              {profile.fundingStage && <DetailCell label="Stage" value={profile.fundingStage} />}
+            </div>
+
+            {/* Tech stack — the candidate search filter */}
+            {profile.techStack?.length > 0 && (
+              <div>
+                <p style={{ fontFamily: MONO, fontSize: 9, color: C.indigo, letterSpacing: "0.1em" }} className="uppercase mb-2">
+                  Tech stack from job posts — use as sourcing filters
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {profile.techStack.map(t => (
+                    <span key={t} style={{ fontFamily: MONO, fontSize: 11, color: C.indigo, background: "rgba(139,144,200,0.08)", border: "1px solid rgba(139,144,200,0.20)", borderRadius: 4, padding: "3px 10px" }}>{t}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* All open roles — the primary output */}
+            {profile.openRoles?.length > 0 && (
+              <div>
+                <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.1em" }} className="uppercase mb-2">
+                  All open roles ({profile.openRoles.length})
+                </p>
+                <div className="space-y-1 max-h-64 overflow-y-auto pr-1">
+                  {profile.openRoles.map((r, i) => (
+                    <div key={i} className="flex items-baseline gap-3 py-1" style={{ borderBottom: `1px solid ${C.border}` }}>
+                      <span style={{ fontSize: 12, color: C.text, flex: 1 }}>{r.title}</span>
+                      {r.team && <span style={{ fontFamily: MONO, fontSize: 9, color: C.indigo, background: "rgba(139,144,200,0.08)", borderRadius: 3, padding: "1px 6px", flexShrink: 0 }}>{r.team}</span>}
+                      {r.location && <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim, flexShrink: 0 }}>{r.location}</span>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Eng leaders and hiring managers */}
+            {profile.people?.length > 0 && (
+              <div>
+                <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.1em" }} className="uppercase mb-3">
+                  Engineering leaders &amp; hiring managers
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {profile.people
+                    .filter(p => /cto|vp.?eng|engineering.?manager|tech.?lead|head.?of.?eng|director.?of.?eng|founding.?eng|staff.?eng/i.test(p.role ?? ""))
+                    .concat(profile.people.filter(p => !/cto|vp.?eng|engineering.?manager|tech.?lead|head.?of.?eng|director.?of.?eng|founding.?eng|staff.?eng/i.test(p.role ?? "")))
+                    .map((p, i) => (
+                      <PersonCard key={`${p.name}-${i}`} person={p} index={i} accentColor={C.indigo} />
+                    ))}
+                </div>
+              </div>
+            )}
+
+            <SocialFooter profile={profile} />
+          </>}
+
+          {/* ══ VC PACK ══ */}
+          {pack === "vc" && <>
+            {/* Funding stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {profile.fundingStage && <DetailCell label="Stage" value={profile.fundingStage} />}
               {profile.fundingTotal && <DetailCell label="Total raised" value={profile.fundingTotal} />}
-              {profile.investors?.length > 0 && <DetailCell label="Lead investors" value={profile.investors.slice(0,2).join(", ")} />}
               {profile.foundedYear && <DetailCell label="Founded" value={profile.foundedYear} />}
-            </>}
-            {pack === "upgrade" && <>
-              {profile.fundingStage && <DetailCell label="Funding stage" value={profile.fundingStage} />}
-              {profile.revenueModel && <DetailCell label="Revenue model" value={profile.revenueModel} />}
-              <DetailCell label="Hiring pace" value={VELOCITY_CONFIG[profile.hiringVelocity]?.label ?? profile.hiringVelocity} />
-              {profile.linkedinEmployeeCount && <DetailCell label="Team size" value={profile.linkedinEmployeeCount} />}
-            </>}
-          </div>
-
-          {(pack === "sdr" || pack === "vc") && profile.recentLaunches && profile.recentLaunches.length > 0 && (
-            <div className="lg:col-span-3">
-              <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.1em" }} className="uppercase mb-2">Recent launches</p>
-              <div className="flex flex-wrap gap-1.5">
-                {profile.recentLaunches.map((l, i) => (
-                  <span key={i} style={{ fontSize: 11, color: C.text, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: "4px 10px" }}>{l}</span>
-                ))}
-              </div>
+              {profile.teamSizeEstimate && <DetailCell label="Team size" value={profile.teamSizeEstimate} />}
+              {profile.monthlyVisitors && <DetailCell label="Monthly visitors" value={profile.monthlyVisitors} />}
+              {profile.estimatedRevenue && <DetailCell label="Est. revenue" value={profile.estimatedRevenue} />}
             </div>
-          )}
 
-
-          {profile.techStack.length > 0 && (
-            <div>
-              <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.1em" }} className="uppercase mb-2">Tech Stack</p>
-              <div className="flex flex-wrap gap-1">
-                {profile.techStack.map(t => (
-                  <span key={t} style={{ fontFamily: MONO, fontSize: 10, color: C.muted, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: "2px 8px" }}>{t}</span>
-                ))}
+            {/* Named investors */}
+            {profile.investors?.length > 0 && (
+              <div>
+                <p style={{ fontFamily: MONO, fontSize: 9, color: C.sage, letterSpacing: "0.1em" }} className="uppercase mb-2">Investors</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {profile.investors.map((inv, i) => (
+                    <span key={i} style={{ fontSize: 11, color: C.text, background: C.sageLo, border: `1px solid ${C.sage}30`, borderRadius: 6, padding: "4px 12px" }}>{inv}</span>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {profile.openRoles.length > 0 && (
-            <div>
-              <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.1em" }} className="uppercase mb-2">Open Roles ({profile.openRoles.length})</p>
-              <div className="space-y-1 max-h-44 overflow-y-auto pr-1">
-                {profile.openRoles.map((r, i) => (
-                  <div key={i} className="flex items-baseline gap-2" style={{ color: C.muted }}>
-                    <span style={{ color: C.sage }} className="shrink-0 text-[10px]">›</span>
-                    <span style={{ fontSize: 11 }}>{r.title}</span>
-                    {r.team && <span style={{ color: C.dim, fontSize: 10 }}>{r.team}</span>}
-                    {r.location && <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim }} className="ml-auto shrink-0">{r.location}</span>}
-                  </div>
-                ))}
+            {/* Traction proof — named customers + metrics */}
+            {profile.namedCustomers?.length > 0 && (
+              <div>
+                <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.1em" }} className="uppercase mb-2">
+                  Customer traction ({profile.namedCustomers.length} logos)
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {profile.namedCustomers.map((c, i) => (
+                    <span key={i} style={{ fontSize: 11, color: C.text, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: "4px 10px" }}>{c}</span>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {profile.keySignals.length > 0 && (
-            <div>
-              <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.1em" }} className="uppercase mb-2">Key Signals</p>
-              <div className="space-y-2">
-                {profile.keySignals.map((s, i) => (
-                  <div key={i} className="flex items-start gap-2" style={{ color: C.muted }}>
-                    <span style={{ color: C.sage, fontSize: 14, lineHeight: 1 }} className="shrink-0 mt-0.5">·</span>
-                    <span style={{ fontSize: 11, lineHeight: 1.6 }}>{s}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {profile.people && profile.people.length > 0 && (
-            <div className="lg:col-span-3">
-              <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.1em" }} className="uppercase mb-3">
-                People at {profile.name} ({profile.people.length}) · Public sources only
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                {profile.people.map((p, i) => (
-                  <motion.div key={`${p.name}-${i}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: i * 0.04 }}
-                    className="rounded-lg p-3 flex flex-col gap-1" style={{ background: C.surface, border: `1px solid ${C.border}` }}>
-                    <div className="flex items-baseline justify-between gap-2">
-                      <span style={{ fontFamily: SANS, fontWeight: 600, fontSize: 12, color: C.text }} className="truncate">{p.name}</span>
-                      {p.linkedin && (
-                        <a href={p.linkedin} target="_blank" rel="noopener noreferrer"
-                          style={{ fontFamily: MONO, fontSize: 9, color: C.indigo, letterSpacing: "0.1em" }}
-                          className="hover:underline shrink-0 uppercase">in →</a>
-                      )}
+            {/* Market expansion signals */}
+            {profile.recentLaunches?.length > 0 && (
+              <div>
+                <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.1em" }} className="uppercase mb-2">Market expansion signals</p>
+                <div className="space-y-1">
+                  {profile.recentLaunches.map((l, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <span style={{ color: C.sage, fontSize: 10, lineHeight: 1.8, flexShrink: 0 }}>↗</span>
+                      <span style={{ fontSize: 12, color: C.muted, lineHeight: 1.6 }}>{l}</span>
                     </div>
-                    {p.role && <span style={{ fontSize: 11, color: C.muted, lineHeight: 1.4 }} className="truncate">{p.role}</span>}
-                    {(p.email || p.twitter) && (
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
-                        {p.email && <a href={`mailto:${p.email}`} style={{ fontFamily: MONO, fontSize: 10, color: C.sage }} className="hover:underline truncate max-w-full">{p.email}</a>}
-                        {p.twitter && <a href={p.twitter} target="_blank" rel="noopener noreferrer" style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.1em" }} className="hover:text-[#7279B8] uppercase">x →</a>}
-                      </div>
-                    )}
-                  </motion.div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {profile.socialLinks && Object.values(profile.socialLinks).some(Boolean) && (
-            <div className="lg:col-span-3 flex gap-4 pt-4 border-t" style={{ borderColor: C.border }}>
-              {profile.socialLinks.twitter  && <a href={profile.socialLinks.twitter}  target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: C.dim }} className="hover:text-[#7279B8] transition-colors">Twitter/X →</a>}
-              {profile.socialLinks.linkedin && <a href={profile.socialLinks.linkedin} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: C.dim }} className="hover:text-[#7279B8] transition-colors">LinkedIn →</a>}
-              {profile.socialLinks.github   && <a href={profile.socialLinks.github}   target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: C.dim }} className="hover:text-[#F4EFE4] transition-colors">GitHub →</a>}
+            {/* Founders and exec team */}
+            {profile.people?.length > 0 && (
+              <div>
+                <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.1em" }} className="uppercase mb-3">
+                  Founders &amp; exec team
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {profile.people
+                    .filter(p => /ceo|cto|coo|cfo|founder|president|co-founder/i.test(p.role ?? ""))
+                    .concat(profile.people.filter(p => !/ceo|cto|coo|cfo|founder|president|co-founder/i.test(p.role ?? "")))
+                    .map((p, i) => (
+                      <PersonCard key={`${p.name}-${i}`} person={p} index={i} accentColor={C.sage} />
+                    ))}
+                </div>
+              </div>
+            )}
+
+            <SocialFooter profile={profile} />
+          </>}
+
+          {/* ══ GROWTH / UPGRADE PACK ══ */}
+          {pack === "upgrade" && <>
+            {/* Stats row */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {profile.fundingStage && <DetailCell label="Funding stage" value={profile.fundingStage} />}
+              {profile.fundingTotal && <DetailCell label="Total raised" value={profile.fundingTotal} />}
+              {profile.revenueModel && <DetailCell label="Revenue model" value={profile.revenueModel} />}
+              {profile.linkedinEmployeeCount && <DetailCell label="Employees" value={profile.linkedinEmployeeCount} />}
+              <DetailCell label="Hiring pace" value={VELOCITY_CONFIG[profile.hiringVelocity]?.label ?? profile.hiringVelocity} />
+              {profile.openRoles?.length > 0 && <DetailCell label="Open roles" value={String(profile.openRoles.length)} />}
             </div>
-          )}
+
+            {/* What they build — the qualification question */}
+            {profile.oneLiner && (
+              <div className="rounded-lg px-4 py-3" style={{ background: "rgba(200,112,112,0.05)", border: "1px solid rgba(200,112,112,0.18)" }}>
+                <p style={{ fontFamily: MONO, fontSize: 9, color: C.rose, letterSpacing: "0.12em" }} className="uppercase mb-1">What they build</p>
+                <p style={{ fontSize: 13, color: C.text, lineHeight: 1.6 }}>{profile.oneLiner}</p>
+              </div>
+            )}
+
+            {/* Tech stack — are they using browser automation tools? */}
+            {profile.techStack?.length > 0 && (
+              <div>
+                <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.1em" }} className="uppercase mb-2">Tech stack</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {profile.techStack.map(t => (
+                    <span key={t} style={{ fontFamily: MONO, fontSize: 11, color: C.muted, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 4, padding: "3px 10px" }}>{t}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Eng roles — signals they are scaling the automation team */}
+            {profile.openRoles?.length > 0 && (
+              <div>
+                <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.1em" }} className="uppercase mb-2">Open roles</p>
+                <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
+                  {profile.openRoles.map((r, i) => (
+                    <div key={i} className="flex items-baseline gap-3 py-1" style={{ borderBottom: `1px solid ${C.border}` }}>
+                      <span style={{ fontSize: 12, color: C.text, flex: 1 }}>{r.title}</span>
+                      {r.location && <span style={{ fontFamily: MONO, fontSize: 9, color: C.dim, flexShrink: 0 }}>{r.location}</span>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Key decision makers */}
+            {profile.people?.length > 0 && (
+              <div>
+                <p style={{ fontFamily: MONO, fontSize: 9, color: C.dim, letterSpacing: "0.1em" }} className="uppercase mb-3">Key contacts</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {profile.people.map((p, i) => (
+                    <PersonCard key={`${p.name}-${i}`} person={p} index={i} accentColor={C.rose} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <SocialFooter profile={profile} />
+          </>}
+
         </div>
       )}
 
@@ -1094,6 +1284,41 @@ function CompanyCard({ row, expanded, onToggle, index = 0, pack, visualIntel }: 
         </div>
       )}
     </motion.div>
+  );
+}
+
+function PersonCard({ person: p, index, accentColor }: { person: { name: string; role?: string; linkedin?: string; email?: string; twitter?: string }; index: number; accentColor: string }) {
+  return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay: index * 0.04 }}
+      className="rounded-lg p-3 flex flex-col gap-1" style={{ background: C.surface, border: `1px solid ${C.border}` }}>
+      <div className="flex items-baseline justify-between gap-2">
+        <span style={{ fontFamily: SANS, fontWeight: 600, fontSize: 12, color: C.text }} className="truncate">{p.name}</span>
+        {p.linkedin && (
+          <a href={p.linkedin} target="_blank" rel="noopener noreferrer"
+            style={{ fontFamily: MONO, fontSize: 9, color: accentColor, letterSpacing: "0.1em" }}
+            className="hover:underline shrink-0 uppercase">in →</a>
+        )}
+      </div>
+      {p.role && <span style={{ fontSize: 11, color: C.muted, lineHeight: 1.4 }} className="truncate">{p.role}</span>}
+      {(p.email || p.twitter) && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
+          {p.email && <a href={`mailto:${p.email}`} style={{ fontFamily: MONO, fontSize: 10, color: C.sage }} className="hover:underline truncate max-w-full">{p.email}</a>}
+          {p.twitter && <a href={p.twitter} target="_blank" rel="noopener noreferrer" style={{ fontFamily: MONO, fontSize: 9, color: C.dim }} className="hover:text-[#7279B8] uppercase">x →</a>}
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+function SocialFooter({ profile }: { profile: CompanyProfile }) {
+  if (!profile.socialLinks || !Object.values(profile.socialLinks).some(Boolean)) return null;
+  return (
+    <div className="flex gap-4 pt-2 border-t" style={{ borderColor: C.border }}>
+      {profile.socialLinks.twitter  && <a href={profile.socialLinks.twitter}  target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: C.dim }} className="hover:text-[#7279B8] transition-colors">Twitter/X →</a>}
+      {profile.socialLinks.linkedin && <a href={profile.socialLinks.linkedin} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: C.dim }} className="hover:text-[#7279B8] transition-colors">LinkedIn →</a>}
+      {profile.socialLinks.github   && <a href={profile.socialLinks.github}   target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: C.dim }} className="hover:text-[#F4EFE4] transition-colors">GitHub →</a>}
+    </div>
   );
 }
 

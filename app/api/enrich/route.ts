@@ -13,27 +13,49 @@ export type Pack = "sdr" | "recruiter" | "vc" | "upgrade";
 const PACK_CONFIG: Record<Pack, { extraUrls: (c: string) => string[]; focus: string; signalKey: "buying" | "hiring" | "investment"; screenshotUrl: (c: string) => string }> = {
   sdr: {
     extraUrls: (c) => [`https://${c}/pricing`, `https://${c}/customers`, `https://${c}/case-studies`],
-    focus: `SDR FOCUS: surface concrete buying signals an outbound rep could act on this week — pricing model (self-serve vs sales-led, "Talk to sales" CTAs), named logos, recent integrations or product launches, expansion into new segments, public roadmap items. People: founders, VP/Head/Director titles with publicly listed contact info.`,
+    focus: `SDR FOCUS — you are an outbound sales rep building a call list.
+PRIORITY 1 — Pricing intelligence: Is this self-serve (credit card, instant signup), sales-led ("Talk to Sales", "Request Demo"), freemium, or enterprise-only? Are prices public or hidden? What tiers exist?
+PRIORITY 2 — Named customer logos: Extract every company name visible as a customer logo or testimonial. These are the namedrop arsenal for cold outreach.
+PRIORITY 3 — Trigger events: Recent product launches, integrations, funding announcements, new market expansion, or partnerships — anything that happened in the last 90 days that a rep could reference.
+PRIORITY 4 — Decision makers: Extract founders, C-suite, VP/Head/Director of Sales, Marketing, Engineering, Product — with publicly listed email, LinkedIn URL, Twitter. Never invent contact info.
+PRIORITY 5 — Competitor mentions: Any competitors named on the site (often in comparison tables or "vs" pages).
+For signals.buying: 4-6 items, each a specific actionable insight (e.g. "Sales-led pricing — 'Talk to Sales' CTA on every tier" or "Just launched Salesforce integration — expansion signal").`,
     signalKey: "buying",
     screenshotUrl: (c) => `https://${c}/pricing`,
   },
   recruiter: {
-    extraUrls: (c) => [`https://${c}/engineering`, `https://${c}/blog`, `https://${c}/handbook`],
-    focus: `RECRUITER FOCUS: full hiring trajectory — every open role with title/team/location, languages/frameworks/clouds explicitly named in job posts, engineering blog topics, public team-size/handbook hints. People: engineering leaders and hiring managers.`,
+    extraUrls: (c) => [`https://${c}/careers`, `https://${c}/jobs`, `https://${c}/engineering`],
+    focus: `RECRUITER FOCUS — you are a technical recruiter sourcing candidates and mapping org structure.
+PRIORITY 1 — Every open role: Extract title, team/department, location (remote/hybrid/city), and seniority level. Do not summarise — list every individual role.
+PRIORITY 2 — Tech stack from job posts: List every language, framework, database, cloud, and tool explicitly named in job descriptions (TypeScript, Rust, Go, React, Postgres, AWS, k8s, etc.). This is your candidate search filter.
+PRIORITY 3 — Engineering org structure: How many eng teams exist? What are they called (Platform, Infra, ML, Product Eng, etc.)? What seniority levels are they hiring at?
+PRIORITY 4 — Hiring managers and engineering leaders: CTO, VP Eng, Engineering Managers, Tech Leads — with LinkedIn URLs. These are your warm intro targets.
+PRIORITY 5 — Culture signals: Remote vs office policy, equity compensation mentions, notable perks, engineering blog topics (signals technical depth and team values).
+For signals.hiring: 4-6 items (e.g. "Hiring Rust engineers — rare signal, strong senior pipeline opportunity" or "5 open ML roles — building in-house AI, not outsourcing").`,
     signalKey: "hiring",
     screenshotUrl: (c) => `https://${c}/careers`,
   },
   vc: {
-    extraUrls: (c) => [`https://${c}/press`, `https://${c}/news`, `https://${c}/investors`, `https://${c}/about`],
-    focus: `VC FOCUS: investment-grade signals — funding stage and latest round, named investors, traction proof (customer logos, ARR/usage stats, partnerships), team caliber (where founders previously worked), market expansion moves. People: founders and exec team with LinkedIn URLs.`,
+    extraUrls: (c) => [`https://${c}/press`, `https://${c}/about`, `https://${c}/blog`],
+    focus: `VC FOCUS — you are an investor doing pre-meeting due diligence.
+PRIORITY 1 — Funding history: Current stage (Pre-seed / Seed / Series A/B/C / Growth), total raised, most recent round size and date, named lead investors (fund names and partner names if visible).
+PRIORITY 2 — Founder backgrounds: Where did each founder work before? (Prior company, role, exit or outcome). This is the single strongest predictor of outcome.
+PRIORITY 3 — Traction proof: Named enterprise customers, ARR or revenue figures, user/company counts, growth metrics, partnerships with named companies. Extract numbers and logos, not vague claims.
+PRIORITY 4 — Market signals: New market expansion, recent product launches, press coverage in named outlets, analyst recognition. What is the TAM narrative they are telling?
+PRIORITY 5 — Team caliber: Total team size, LinkedIn employee count, key executive hires in the last 6 months.
+For signals.investment: 4-6 items (e.g. "Series B — $40M led by a16z, Jan 2025" or "Founders previously built and sold X to Stripe — strong exit pedigree").`,
     signalKey: "investment",
     screenshotUrl: (c) => `https://${c}`,
   },
   upgrade: {
     extraUrls: (c) => [`https://${c}/about`, `https://${c}/pricing`],
-    focus: `UPGRADE FOCUS: This company uses the Hyperbrowser SDK. Qualify them for a paid plan upgrade.
-Extract: exactly what they build with browser automation, whether it runs in production serving real customers, team size and hiring pace, funding or revenue signals, and any evidence they are hitting scale limits (parallel scraping jobs, real-time monitoring, commercial SLA requirements).
-Surface in buying signals: concrete reasons their free tier (1 concurrent session, 5k credits) is a bottleneck for what they are building.`,
+    focus: `GROWTH PACK FOCUS — you are qualifying a Hyperbrowser free-tier user for a paid plan upgrade.
+PRIORITY 1 — What exactly do they build with browser automation? Is it a core product feature or an internal tool? Is it live in production serving real customers?
+PRIORITY 2 — Scale indicators: How many concurrent browser sessions would their use case require? Do they mention real-time monitoring, parallel scraping, high-volume extraction, or commercial SLAs?
+PRIORITY 3 — Revenue and funding signals: Are they funded? Do they have paying customers? Is this a commercial product or a side project? Extract funding stage, named investors, pricing model.
+PRIORITY 4 — Team size and growth: LinkedIn employee count, hiring pace, open engineering roles — signals they are scaling and have budget.
+PRIORITY 5 — Free-tier bottleneck evidence: Any mention of rate limits, session limits, credit exhaustion, performance requirements that exceed 1 concurrent session or 5k monthly credits.
+For signals.buying: 4-6 items that are concrete upgrade triggers (e.g. "Production scraping pipeline — free tier 1-session limit is a hard bottleneck" or "Series A funded — budget for infrastructure exists").`,
     signalKey: "buying",
     screenshotUrl: (c) => `https://${c}`,
   },

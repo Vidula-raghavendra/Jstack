@@ -971,7 +971,7 @@ function CompanyCard({ row, expanded, onToggle, index = 0, pack, visualIntel }: 
             {pack === "sdr" && <>
               {profile.pricingModel && profile.pricingModel !== "unknown" && <DetailCell label="Pricing model" value={profile.pricingModel} />}
               {profile.revenueModel && <DetailCell label="Revenue model" value={profile.revenueModel} />}
-              {profile.namedCustomers?.length > 0 && <DetailCell label="Named customers" value={`${profile.namedCustomers.length} logos`} />}
+              {profile.namedCustomers?.length > 0 && <DetailCell label="Named customers" value={profile.namedCustomers.slice(0, 4).join(", ") + (profile.namedCustomers.length > 4 ? ` +${profile.namedCustomers.length - 4}` : "")} />}
               {profile.teamSizeEstimate && <DetailCell label="Team size" value={profile.teamSizeEstimate} />}
             </>}
             {pack === "recruiter" && <>
